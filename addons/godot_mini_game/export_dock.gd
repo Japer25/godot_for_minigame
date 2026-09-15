@@ -25,12 +25,16 @@ const ORIENTATION_OPTIONS := [
 @onready var output_path: LineEdit = $OutputRow/OutputPath
 @onready var browse_btn: Button = $OutputRow/BrowseBtn
 @onready var export_btn: Button = $ExportBtn
+@onready var cancel_export_btn: Button = $CancelExportBtn
+@onready var timeout_input: SpinBox = $TimeoutRow/TimeoutInput
 @onready var status_label: RichTextLabel = $StatusLabel
 @onready var folder_dialog: FileDialog = $FolderDialog
 @onready var template_status: RichTextLabel = $TemplateStatus
 @onready var import_btn: Button = $TemplateRow/ImportBtn
 @onready var refresh_btn: Button = $TemplateRow/RefreshBtn
 @onready var template_file_dialog: FileDialog = $TemplateFileDialog
+
+var _active_exporter: RefCounted
 
 
 func _ready() -> void:
@@ -49,6 +53,7 @@ func _ready() -> void:
 
 	browse_btn.pressed.connect(_on_browse)
 	export_btn.pressed.connect(_on_export)
+	cancel_export_btn.pressed.connect(_on_cancel_export)
 	folder_dialog.dir_selected.connect(_on_dir_selected)
 	import_btn.pressed.connect(_on_import_template)
 	# The "Refresh" button refreshes BOTH the template status and the export
@@ -185,13 +190,19 @@ func _on_export() -> void:
 	if preset_name.is_empty():
 		_log("[color=red]请先在 Project → Export 中创建一个 Web 导出预设；如已创建请点击「刷新」按钮[/color]")
 		return
+	if platform == "tiktok" and appid.is_empty():
+		_log("[color=red]请填写 TikTok Client Key[/color]")
+		appid_input.grab_focus()
+		return
 
-	export_btn.disabled = true
+	_set_export_busy(true)
 	_log("[color=cyan]开始导出 %s ...[/color]" % str(
 		PLATFORM_DISPLAY_NAMES.get(platform, platform)))
 
 	var exporter := Exporter.new()
+	_active_exporter = exporter
 	exporter.log_callback = _log
+	exporter.pack_timeout_seconds = timeout_input.value
 
 	var err := await exporter.export_mini_game(
 		platform,
@@ -204,10 +215,36 @@ func _on_export() -> void:
 	if err == OK:
 		_log("[color=green][b]导出成功！[/b] → %s[/color]" % output_dir)
 		_show_toast("导出成功！", "小游戏已导出到:\n%s" % output_dir)
+	elif err == ERR_SKIP:
+		_log("[color=yellow]导出已取消[/color]")
+	elif err == ERR_TIMEOUT:
+		_log("[color=red]资源导出超时；可调整超时秒数后重试[/color]")
 	else:
 		_log("[color=red][b]导出失败[/b][/color]")
 
-	export_btn.disabled = false
+	_active_exporter = null
+	_set_export_busy(false)
+
+
+func _on_cancel_export() -> void:
+	if _active_exporter:
+		_active_exporter.cancel_export()
+		cancel_export_btn.disabled = true
+		_log("正在取消导出，请等待子进程退出 ...")
+
+
+func _set_export_busy(busy: bool) -> void:
+	export_btn.disabled = busy
+	import_btn.disabled = busy
+	refresh_btn.disabled = busy
+	cancel_export_btn.visible = busy
+	cancel_export_btn.disabled = not busy
+	timeout_input.editable = not busy
+
+
+func _exit_tree() -> void:
+	if _active_exporter:
+		_active_exporter.cancel_export()
 
 
 ## Pops a one-shot modal dialog. The dialog is parented to the editor's base

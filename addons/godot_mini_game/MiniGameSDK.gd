@@ -35,6 +35,7 @@ signal tiktok_mission_result(action: String, success: bool, can_receive_reward: 
 signal keyboard_event(event_type: String, value: String)
 
 signal http_response(status_code: int, data: String, error: String)
+signal http_request_completed(request_id: int, status_code: int, data: String, error: String)
 signal file_transfer_result(action: String, success: bool, status_code: int, data_json: String, error: String)
 signal socket_operation_result(action: String, success: bool, data_json: String, error: String)
 signal socket_opened(data_json: String, error: String)
@@ -160,6 +161,8 @@ var _screen_recording_state_cb: JavaScriptObject = null
 # events: onAppShow / onAppHide / onAppError) stay for the SDK's lifetime.
 var _cbs: Dictionary = {}
 var _cb_counter: int = 0
+var _persistent_cbs: Dictionary = {}
+var _http_request_counter: int = 0
 
 ## True when running inside a mini-game runtime with the JS SDK available.
 var is_mini_game: bool:
@@ -237,21 +240,34 @@ func _emit_bridge_initialization_failed() -> void:
 func _track_oneshot(handler: Callable) -> JavaScriptObject:
 	var id := _cb_counter
 	_cb_counter += 1
-	var cb := JavaScriptBridge.create_callback(func(args: Array) -> void:
+	var cb := _create_bridge_callback(func(args: Array) -> void:
+		if not _cbs.has(id):
+			return
 		_cbs.erase(id)
 		handler.call(args))
 	_cbs[id] = cb
 	return cb
 
 
-## Wraps a long-lived `handler` (e.g. lifecycle hooks fired many times).
-## Kept alive for the SDK's lifetime.
+## Reuses one bridge callback per Callable for the SDK's lifetime. Repeated
+## keyboard, connection and media sessions share their signal dispatcher;
+## Callables bound to different instances/arguments remain independent.
 func _track_persistent(handler: Callable) -> JavaScriptObject:
+	# Some Godot versions compare bound Callables by their base method only.
+	# Include arguments explicitly so separate event subscriptions stay distinct.
+	var key := [handler, handler.get_bound_arguments(), handler.get_unbound_arguments_count()]
+	if _persistent_cbs.has(key):
+		return _persistent_cbs[key]
 	var id := _cb_counter
 	_cb_counter += 1
-	var cb := JavaScriptBridge.create_callback(handler)
+	var cb := _create_bridge_callback(handler)
 	_cbs[id] = cb
+	_persistent_cbs[key] = cb
 	return cb
+
+
+func _create_bridge_callback(handler: Callable) -> JavaScriptObject:
+	return JavaScriptBridge.create_callback(handler)
 
 
 ## str() but null-safe. `str(null)` returns "<null>" in GDScript 4,
@@ -896,6 +912,31 @@ func _on_http_response(args: Array) -> void:
 		_i(args[0]) if args.size() > 0 else 0,
 		_s(args[1]) if args.size() > 1 else "",
 		_s(args[2]) if args.size() > 2 else "")
+
+
+## Returns a unique ID for concurrent requests. Completion is deferred so
+## callers can store the returned ID before http_request_completed fires.
+## This API has its own signal; http_request/http_response remain unchanged.
+func http_request_with_id(url: String, method: String = "GET", data: String = "", headers: Dictionary = {}) -> int:
+	_http_request_counter += 1
+	var request_id := _http_request_counter
+	if not _sdk:
+		_on_http_response_with_id([0, "", NOT_IN_RUNTIME], request_id)
+	else:
+		_sdk.httpRequest(url, method, data, JSON.stringify(headers),
+			_track_oneshot(_on_http_response_with_id.bind(request_id)))
+	return request_id
+
+
+func _on_http_response_with_id(args: Array, request_id: int) -> void:
+	call_deferred("_emit_http_request_completed", request_id,
+		_i(args[0]) if args.size() > 0 else 0,
+		_s(args[1]) if args.size() > 1 else "",
+		_s(args[2]) if args.size() > 2 else "")
+
+
+func _emit_http_request_completed(request_id: int, status_code: int, data: String, error: String) -> void:
+	http_request_completed.emit(request_id, status_code, data, error)
 
 
 func download_file(
@@ -2641,11 +2682,13 @@ static func _parse_json_object(json_str: Variant) -> Dictionary:
 ## `params` maps to the usual wx.* options object. For sync/positional APIs,
 ## pass `{ "_args": [...] }`, for example:
 ## `call_api("getStorageSync", {"_args": ["level"]})`.
-func call_api(api_name: String, params: Dictionary = {}) -> void:
+## completion_mode: "auto" preserves sync getters and waits for known Task
+## APIs; "async" always waits for callbacks/Promise; "sync" uses the return.
+func call_api(api_name: String, params: Dictionary = {}, completion_mode: String = "auto") -> void:
 	if not _sdk:
 		generic_api_result.emit(api_name, false, "", NOT_IN_RUNTIME)
 		return
-	_sdk.callApi(api_name, JSON.stringify(params), _track_oneshot(_on_generic_api_result))
+	_sdk.callApi(api_name, JSON.stringify(params), _track_oneshot(_on_generic_api_result), completion_mode)
 
 
 func _on_generic_api_result(args: Array) -> void:

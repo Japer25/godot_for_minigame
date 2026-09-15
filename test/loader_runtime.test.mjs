@@ -311,6 +311,7 @@ async function testLegacyCanvasSingleLoadAndDispose() {
   );
   assert.equal(fixture.timerCount(), 1);
   assert.equal(loader.state, "running");
+  assertLoadingSurfaceReleased(loader, fixture);
   assert.equal(engine.config.canvas, fixture.mainCanvas);
   assert.deepEqual(engine.config.persistentPaths, []);
   assert.deepEqual(engine.config.args, ["--main-pack", "engine/godot.zip"]);
@@ -323,6 +324,7 @@ async function testLegacyCanvasSingleLoadAndDispose() {
   loader.dispose();
   loader.dispose();
   assert.equal(loader.state, "disposed");
+  assertLoadingSurfaceReleased(loader, fixture);
   assert.deepEqual(fixture.clearedTimers, [101]);
   assert.equal(fixture.engineCalls.quit, 1);
   fixture.triggerHide();
@@ -378,6 +380,84 @@ async function testLoadFailureIsObservableAndStable() {
   }
   assert.equal(loader.state, "failed");
   assert.equal(fixture.timerCount(), 0);
+  assertLoadingSurfaceReleased(loader, fixture);
+}
+
+function assertLoadingSurfaceReleased(loader, fixture) {
+  assert.equal(fixture.loadingCanvas.width, 1);
+  assert.equal(fixture.loadingCanvas.height, 1);
+  for (const field of ["loadingCanvas", "loadingCtx", "bgImage", "logoImage", "screenTexture", "screenCtx", "cleanWebgl"]) {
+    assert.equal(loader[field], null, `${field} must not retain loading resources`);
+  }
+  assert.equal(fixture.mainCanvas.width, 390, "cleanup must not resize the engine canvas");
+  assert.equal(fixture.mainCanvas.height, 844);
+  assert.equal(fixture.mainCanvas.getContext("webgl2"), fixture.gl, "the engine keeps its WebGL context");
+  assert.equal(fixture.gl.deleteTextureCalls(), 1, "cleanup must release each loading texture once");
+}
+
+async function testDisposeBeforeLoadReleasesLoadingSurface() {
+  const fixture = await loadLoaderFixture();
+  const loader = new fixture.Loader();
+  loader.dispose();
+  loader.dispose();
+  assertLoadingSurfaceReleased(loader, fixture);
+  assert.equal(fixture.engineCalls.start, 0);
+  assert.equal(fixture.windowListenerCount("resize"), 0);
+}
+
+async function testDisposedLoaderIgnoresLateSubpackageSuccess() {
+  const fixture = await loadLoaderFixture();
+  let finishSubpackage;
+  fixture.hostApi.loadSubpackage = (options) => { finishSubpackage = options.success; };
+  const loader = new fixture.Loader();
+  const pending = loader.load();
+  while (!finishSubpackage) await Promise.resolve();
+  loader.dispose();
+  const originalConsoleError = console.error;
+  console.error = () => {};
+  try {
+    finishSubpackage();
+    await assert.rejects(pending, /Load was disposed/);
+  } finally {
+    console.error = originalConsoleError;
+  }
+  assertLoadingSurfaceReleased(loader, fixture);
+  assert.equal(fixture.engineCalls.start, 0);
+  assert.equal(loader.state, "disposed");
+}
+
+async function testHideQueuesLatestSaveBehindInflightWrite() {
+  const fixture = await loadLoaderFixture();
+  const loader = new fixture.Loader();
+  const engine = await loader.load();
+  let gameFile = new Uint8Array([1]);
+  let hostFile;
+  let finishFirstWrite;
+  let writes = 0;
+  engine.copyFSToAdapter = () => {
+    const snapshot = gameFile.slice();
+    writes++;
+    if (writes === 1) {
+      return new Promise((resolve) => {
+        finishFirstWrite = () => { hostFile = snapshot; resolve(); };
+      });
+    }
+    hostFile = snapshot;
+    return Promise.resolve();
+  };
+  const pending = loader._flushPersistentFiles("interval");
+  while (!finishFirstWrite) await Promise.resolve();
+  gameFile = new Uint8Array([2]);
+  fixture.triggerHide();
+  fixture.triggerHide();
+  assert.equal(loader._syncPromise, pending, "the shared promise covers the follow-up write");
+  assert.equal(loader._flushPersistentFiles("interval"), pending);
+  finishFirstWrite();
+  await pending;
+  assert.equal(writes, 2, "multiple hide events coalesce into one latest-state follow-up");
+  assert.deepEqual([...hostFile], [2]);
+  assert.equal(loader._syncPromise, null);
+  loader.dispose();
 }
 
 async function testEmptyPersistentDirectoryExistsBeforeMain() {
@@ -450,6 +530,9 @@ async function testTikTokKeepsReadOnlyRestoreAndSkipsWriteback() {
 await testLegacyCanvasSingleLoadAndDispose();
 await testLoadingBlitTracksDrawingBufferResize();
 await testLoadFailureIsObservableAndStable();
+await testDisposeBeforeLoadReleasesLoadingSurface();
+await testDisposedLoaderIgnoresLateSubpackageSuccess();
+await testHideQueuesLatestSaveBehindInflightWrite();
 await testEmptyPersistentDirectoryExistsBeforeMain();
 await testDouyinRestoreAndWritebackRemainEnabled();
 await testTikTokKeepsReadOnlyRestoreAndSkipsWriteback();

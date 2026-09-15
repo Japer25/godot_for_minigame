@@ -115,7 +115,8 @@ Platform differences:
 - WeChat: the `wx...` ID from [mp.weixin.qq.com](https://mp.weixin.qq.com)
 - Douyin: the `tt...` ID from [developer.open-douyin.com](https://developer.open-douyin.com)
 - TikTok: the **Client Key** registered for the Native mini game
-- Leave blank or type anything for local dev; must be real for upload
+- WeChat/Douyin local exports may use a placeholder; uploads need a real ID.
+  TikTok requires a non-empty Client Key before resource export starts.
 
 ### Orientation
 
@@ -152,6 +153,12 @@ Step 7/7: lock, recheck, and transactionally publish
 ```
 
 A modal shows the output path on success. Any failure is printed in red in the log.
+
+The resource-pack subprocess has a configurable timeout (600 seconds by default).
+Use **Cancel export** while it is running to stop that export. The previous
+published output is preserved; failed/cancelled jobs report the path to their
+full log. If termination cannot be confirmed, keep the reported staging files
+until the child process has stopped.
 
 If an ordinary publish operation fails, the same process rolls the managed
 paths back from its sibling backup. A process or power failure is different:
@@ -322,7 +329,7 @@ The plugin registers `MiniGameSDK` as an autoload. In non-mini-game environments
 
 Async calls deliver results via **signals** — no `await`. Sync calls (`storage_*`, `vibrate_*`) return immediately.
 
-The 224 public methods and 83 signals are the complete bridge surface, not a
+The 225 public methods and 84 signals are the complete bridge surface, not a
 blanket three-platform compatibility claim. Same-name APIs are dispatched to
 `wx`, `tt`, or `TTMinis.game` only when the selected host exposes the required
 capability. Payments and other platform-specific flows use explicit mappings;
@@ -753,6 +760,23 @@ MiniGameSDK.http_request(
 )
 ```
 
+For concurrent requests, use `http_request_with_id()` and its separate
+`http_request_completed(request_id, status_code, data, error)` signal. IDs are
+unique within the SDK instance. Completion is deferred until after the method
+returns, including unsupported-runtime errors, so the caller can register its ID.
+The existing `http_request()` / `http_response` API is unchanged.
+
+```gdscript
+var requests := {}
+MiniGameSDK.http_request_completed.connect(func(request_id, status, data, err):
+    var purpose = requests.get(request_id, "")
+    requests.erase(request_id)
+    print(purpose, status, data, err)
+)
+requests[MiniGameSDK.http_request_with_id("https://api.example.com/profile")] = "profile"
+requests[MiniGameSDK.http_request_with_id("https://api.example.com/inventory")] = "inventory"
+```
+
 > Before release, whitelist your API domain under **Development Settings → Server Domains → request** in the WeChat console.
 
 ### File transfer
@@ -785,7 +809,7 @@ MiniGameSDK.upload_file(
 )
 ```
 
-The typed wrapper currently reports the basic success/fail result, HTTP status, and raw JSON payload. `DownloadTask` / `UploadTask` progress and abort controls are not exposed as typed GDScript methods yet; use `call_api()` or extend the JS bridge if you need task-level progress events.
+The typed wrapper currently reports the basic success/fail result, HTTP status, and raw JSON payload. `DownloadTask` / `UploadTask` progress and abort controls are not exposed as GDScript methods; extend the JS bridge if you need them. `call_api()` waits for the operation's result and does not expose the task handle.
 
 ### File system
 
@@ -1527,6 +1551,14 @@ MiniGameSDK.call_api("setClipboardData", {"data": "hello"})
 # For positional / sync APIs such as getStorageSync(key), use _args.
 MiniGameSDK.call_api("getStorageSync", {"_args": ["level"]})
 ```
+
+The optional third argument, `completion_mode`, defines how a result completes:
+
+- `"auto"` (default): callbacks and Promises complete asynchronous operations. Known Task-returning methods (`request`, `downloadFile`, `uploadFile`, `connectSocket`, `loadSubpackage`, `preDownloadSubpackage`) and handles with `abort()` wait for callbacks. Other direct values retain synchronous getter support, including names without `Sync`.
+- `"async"`: ignore direct return values and wait for a callback or Promise. Use this for additional asynchronous APIs that return an opaque handle.
+- `"sync"`: use the direct return value, including `undefined`; returned Promises are still awaited. `_args` controls positional arguments independently of the completion mode.
+
+For example, `MiniGameSDK.call_api("customAsyncApi", {"key": "value"}, "async")` waits for that API's callbacks. Success/failure settles once even when a provider also returns a Promise. The bridge does not impose a timeout on this generic API.
 
 `call_api()` is a fallback for long-tail platform coverage. Prefer typed methods for auth, payment, ads, file-system, lifecycle, and other high-risk flows where stable parameters, result shapes, and error semantics matter.
 

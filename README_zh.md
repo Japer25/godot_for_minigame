@@ -37,7 +37,7 @@ Godot Mini Game 可以把普通 Godot 项目转换成微信、抖音或 TikTok �
 | | |
 |---|---|
 | **编辑器内完成工作流**<br />在一个 Dock 中构建 PCK、装配平台文件、验证并发布。 | **精确模板身份**<br />Godot 源码、Emscripten、profile、revision、schema、特性和哈希保持一致。 |
-| **一套按能力门控的 SDK**<br />`MiniGameSDK` 通过 `wx`、`tt` 与 `TTMinis.game` 提供 224 个方法、83 个信号；具体可用性仍取决于目标宿主。 | **受保护的发布边界**<br />暂存区、所有权 Manifest、哈希、输出锁、backup 和回滚只处理受管路径，并保留 sidecars。 |
+| **一套按能力门控的 SDK**<br />`MiniGameSDK` 通过 `wx`、`tt` 与 `TTMinis.game` 提供 225 个方法、84 个信号；具体可用性仍取决于目标宿主。 | **受保护的发布边界**<br />暂存区、所有权 Manifest、哈希、输出锁、backup 和回滚只处理受管路径，并保留 sidecars。 |
 
 ## 系统架构
 
@@ -155,7 +155,7 @@ MiniGameSDK.show_toast("Level %s" % level, "success")
 启动时 SDK 会先验证 Bridge 的 brand、全局名称、ABI 和必需方法，再绑定生命周期。
 排查集成问题时可检查 `bridge_info` 和 `bridge_initialization_error`。
 
-**[查看全部 224 个方法、83 个信号 →](https://anrans.github.io/godot_for_minigame/api/)**
+**[查看全部 225 个方法、84 个信号 →](https://anrans.github.io/godot_for_minigame/api/)**
 
 API 页面展示的是完整 Bridge 接口面，不代表每个宿主都兼容全部方法。同名能力按
 宿主做 capability gating；支付等平台特有能力走显式 Provider 映射。
@@ -178,6 +178,10 @@ API 页面展示的是完整 Bridge 接口面，不代表每个宿主都兼容�
 欢迎提交 Issue 和 Pull Request。平台差异应保持在共享 Runtime 与 Bridge 契约之后，
 提交变更前请运行完整导出测试。维护者请遵循不可变 Tag 的
 [发布流程](docs/RELEASING.md)。
+
+安装 Node.js 22+ 和匹配版本的 Godot 后，运行 `./scripts/test.sh`。
+需要时可设置 `GODOT_BIN=/path/to/Godot`。GDScript 测试使用临时项目和仓库内的
+Web 预设，不会覆盖本地导出配置。
 
 ## 许可证
 

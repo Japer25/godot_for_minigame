@@ -130,7 +130,8 @@ assert.ok(
   "high-DPI backing must remain gated to the TikTok runtime until other hosts are device-certified",
 );
 const projectConfig = read("project.godot");
-const exportPresets = read("export_presets.cfg");
+// Validate the committed CI/test fixture, never a developer's ignored preset.
+const exportPresets = read("test/fixtures/web_export_presets.cfg");
 assert.ok(projectConfig.includes('window/stretch/mode="canvas_items"'));
 assert.ok(projectConfig.includes('window/stretch/aspect="keep_width"'));
 assert.ok(projectConfig.includes("window/dpi/allow_hidpi=true"));

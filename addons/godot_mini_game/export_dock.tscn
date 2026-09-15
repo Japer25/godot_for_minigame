@@ -71,13 +71,30 @@ text = "刷新"
 [node name="TemplateHint" type="Label" parent="."]
 autowrap_mode = 2
 theme_override_font_sizes/font_size = 11
-text = "需要小游戏兼容模板才能在真机运行。可从 godot-love-wechat Releases 下载，或自行编译。"
+text = "需要与当前编辑器精确匹配的小游戏模板。可从本项目 Releases 下载，或自行编译。"
 
 [node name="Sep3" type="HSeparator" parent="."]
 
 [node name="ExportBtn" type="Button" parent="."]
 custom_minimum_size = Vector2(0, 40)
 text = "导出小游戏"
+
+[node name="CancelExportBtn" type="Button" parent="."]
+visible = false
+disabled = true
+text = "取消导出"
+
+[node name="TimeoutRow" type="HBoxContainer" parent="."]
+
+[node name="TimeoutLabel" type="Label" parent="TimeoutRow"]
+text = "资源导出超时（秒）"
+
+[node name="TimeoutInput" type="SpinBox" parent="TimeoutRow"]
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 86400.0
+value = 600.0
+tooltip_text = "Godot 资源打包子进程的最长等待时间；超时后停止本次导出。"
 
 [node name="StatusLabel" type="RichTextLabel" parent="."]
 custom_minimum_size = Vector2(0, 120)

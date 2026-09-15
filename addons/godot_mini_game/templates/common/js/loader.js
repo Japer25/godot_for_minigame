@@ -99,6 +99,7 @@ class Loader {
     this._loadPromise = null;
     this._syncTimer = null;
     this._syncPromise = null;
+    this._hideSyncPending = false;
     this._hideSyncHandler = null;
     this._loadingResizeHandler = null;
     this._loadingSurfaceCleaned = false;
@@ -142,6 +143,7 @@ class Loader {
   }
 
   _step() {
+    if (this._loadingSurfaceCleaned || this.state === "disposed") return;
     this.progress = Math.min(this.progress + 1, 3);
     this._drawLoading();
   }
@@ -164,6 +166,7 @@ class Loader {
   }
 
   _drawLoading() {
+    if (this._loadingSurfaceCleaned || this.state === "disposed") return;
     const ctx = this.loadingCtx;
     const size = this._syncLoadingSurfaceSize();
     const w = size.width, h = size.height;
@@ -333,7 +336,6 @@ class Loader {
       } else {
         console.log("[Loader]     TikTok Native persistent writeback disabled; read-only restore remains enabled");
       }
-      this.logoImage = null;
       this.state = "running";
       console.log("[Loader] ✓ 加载完成，游戏已启动");
       return engine;
@@ -351,12 +353,24 @@ class Loader {
   }
 
   _flushPersistentFiles(reason) {
-    if (this._syncPromise) return this._syncPromise;
-    const operation = godotSdk.syncfs()
-      .catch((error) => {
-        console.error(`[sync:${reason}]`, error);
-        return false;
-      });
+    if (this._syncPromise) {
+      // A hide event may arrive after the current snapshot was captured. Keep
+      // one pending follow-up so the returned promise includes the latest save.
+      if (reason === "hide") this._hideSyncPending = true;
+      return this._syncPromise;
+    }
+    const flush = async () => {
+      let result = false;
+      let currentReason = reason;
+      do {
+        this._hideSyncPending = false;
+        try { result = await godotSdk.syncfs(); }
+        catch (error) { console.error(`[sync:${currentReason}]`, error); result = false; }
+        currentReason = "hide";
+      } while (this._hideSyncPending && this.state !== "disposed");
+      return result;
+    };
+    const operation = flush();
     this._syncPromise = operation.then((result) => {
       this._syncPromise = null;
       return result;
@@ -374,10 +388,19 @@ class Loader {
       try { _window.removeEventListener("resize", this._loadingResizeHandler); } catch (_) {}
     }
     this._loadingResizeHandler = null;
-    try {
-      this.loadingCtx.clearRect(0, 0, this.loadingCanvas.width, this.loadingCanvas.height);
-    } catch (_) {}
     try { this.cleanWebgl(); } catch (_) {}
+    // clearRect only clears pixels; it keeps the high-DPR backing store alive.
+    // Release the loading-only surface without resizing Godot's main canvas.
+    if (this.loadingCanvas && this.loadingCanvas !== _canvas) {
+      try { this.loadingCanvas.width = 1; this.loadingCanvas.height = 1; } catch (_) {}
+    }
+    this.loadingCanvas = null;
+    this.loadingCtx = null;
+    this.bgImage = null;
+    this.logoImage = null;
+    this.screenTexture = null;
+    this.screenCtx = null;
+    this.cleanWebgl = null;
   }
 
   dispose() {

@@ -336,7 +336,11 @@ class GodotSDK {
 
   // ── Generic platform API bridge ─────────────────────────────────
 
-  callApi(apiName, paramsJson, callback) {
+  callApi(apiName, paramsJson, callback, completionMode = "auto") {
+    if (!["auto", "async", "sync"].includes(completionMode)) {
+      callback(apiName || "", false, "", "Invalid API completion mode: expected auto, async, or sync");
+      return;
+    }
     if (!/^[A-Za-z_$][\w$]*$/.test(apiName || "")) {
       callback(apiName || "", false, "", "Invalid API name");
       return;
@@ -383,11 +387,17 @@ class GodotSDK {
         result = fn.call(_api, opts);
       }
 
+      const returnsTask = ["request", "downloadFile", "uploadFile", "connectSocket",
+        "loadSubpackage", "preDownloadSubpackage"].includes(apiName)
+        || (result && typeof result.abort === "function");
       if (result && typeof result.then === "function") {
-        result.then((res) => finish(true, res || {})).catch((err) => finish(false, null, err));
-      } else if (result !== undefined && !settled) {
-        finish(true, result);
-      } else if (apiName.endsWith("Sync") && !settled) {
+        result.then((res) => finish(true, res === undefined ? {} : res)).catch((err) => finish(false, null, err));
+      } else if (completionMode === "sync"
+        || (completionMode === "auto" && !returnsTask
+          && (result !== undefined || apiName.endsWith("Sync")))) {
+        // Task handles describe an in-flight operation, never its outcome.
+        // Auto preserves synchronous getters (including names without Sync);
+        // async explicitly waits for callbacks for otherwise ambiguous APIs.
         finish(true, result);
       }
     } catch (e) {
@@ -1197,17 +1207,31 @@ class GodotSDK {
   httpRequest(url, method, data, headersJson, callback) {
     let h = {};
     try { h = headersJson ? JSON.parse(headersJson) : {}; } catch (_) {}
-    _api.request({
-      url,
-      method: method || "GET",
-      data: data || "",
-      header: h,
-      success: (res) => {
-        const body = typeof res.data === "string" ? res.data : JSON.stringify(res.data);
-        callback(res.statusCode, body, "");
-      },
-      fail: (err) => callback(0, "", _fmtErr(err)),
-    });
+    let settled = false;
+    const finish = (...args) => {
+      if (settled) return;
+      settled = true;
+      callback(...args);
+    };
+    if (typeof _api.request !== "function") {
+      finish(0, "", _unsupported("request"));
+      return;
+    }
+    try {
+      _api.request({
+        url,
+        method: method || "GET",
+        data: data || "",
+        header: h,
+        success: (res) => {
+          try {
+            const body = typeof res.data === "string" ? res.data : JSON.stringify(res.data);
+            finish(res.statusCode, body, "");
+          } catch (err) { finish(0, "", _fmtErr(err)); }
+        },
+        fail: (err) => finish(0, "", _fmtErr(err)),
+      });
+    } catch (err) { finish(0, "", _fmtErr(err)); }
   }
 
   _fileTransferAction(apiName, options, callback) {
@@ -1269,6 +1293,20 @@ class GodotSDK {
     this._fileTransferAction("uploadFile", options, callback);
   }
 
+  _disposeSocket(state) {
+    if (!state || !state.task) return;
+    for (const [event, listener] of Object.entries(state.listeners)) {
+      const off = state.task[`off${event}`];
+      if (typeof off === "function") {
+        try { off.call(state.task, listener); } catch (_) {}
+      }
+    }
+    if (!state.closed && typeof state.task.close === "function") {
+      state.closed = true;
+      try { state.task.close({ success() {}, fail() {} }); } catch (_) {}
+    }
+  }
+
   connectSocket(url, headersJson, protocolsJson, tcpNoDelay, perMessageDeflate, timeout, forceCellularNetwork, callback, eventCallback) {
     if (typeof _api.connectSocket !== "function") {
       callback("connectSocket", false, "", _unsupported("connectSocket"));
@@ -1286,38 +1324,101 @@ class GodotSDK {
     if (timeoutMs > 0) options.timeout = timeoutMs;
     if (forceCellularNetwork) options.forceCellularNetwork = true;
 
-    try {
-      const task = _api.connectSocket(Object.assign({}, options, {
-        success: (res) => callback("connectSocket", true, _jsonSafe(res || {}), ""),
-        fail: (err) => callback("connectSocket", false, "", _fmtErr(err)),
-      }));
-      if (!task) {
+    const state = { task: null, listeners: {}, registered: false, closed: false,
+      failed: false, accepted: false, opened: false, settled: false };
+    state.finish = (ok, res) => {
+      if (state.settled) return;
+      state.settled = true;
+      callback("connectSocket", ok, ok ? _jsonSafe(res || {}) : "", ok ? "" : _fmtErr(res));
+    };
+    const fail = (err) => {
+      state.failed = true;
+      if (this._pendingSocket === state) this._pendingSocket = null;
+      if (this._socketState === state) {
+        this._socketState = null;
         this._socketTask = null;
-        return false;
       }
-      this._socketTask = task;
-      if (typeof task.onOpen === "function") {
-        task.onOpen((res) => eventCallback("open", "", _jsonSafe(res || {}), ""));
-      }
-      if (typeof task.onMessage === "function") {
-        task.onMessage((res) => {
+      this._disposeSocket(state);
+      state.finish(false, err);
+    };
+    const activate = () => {
+      if (!state.registered || state.failed || state.closed || this._pendingSocket !== state) return;
+      const previous = this._socketState;
+      this._socketState = state;
+      this._socketTask = state.task;
+      this._pendingSocket = null;
+      if (previous !== state) this._disposeSocket(previous);
+    };
+    const pending = this._pendingSocket;
+    this._pendingSocket = state;
+    if (pending && pending !== this._socketState) {
+      pending.failed = true;
+      this._disposeSocket(pending);
+      pending.finish(false, "WebSocket connection attempt superseded");
+    }
+
+    try {
+      state.task = _api.connectSocket(Object.assign({}, options, {
+        success: (res) => {
+          state.accepted = true;
+          state.response = res;
+          if (state.registered && !state.failed) {
+            if (typeof state.task.onOpen !== "function") activate();
+            state.finish(true, res);
+          }
+        },
+        fail,
+      }));
+      if (state.failed) { this._disposeSocket(state); return false; }
+      if (!state.task) { fail("connectSocket returned no SocketTask"); return false; }
+      const listeners = {
+        Open: (res) => {
+          if (state.closing) return;
+          state.opened = true;
+          state.openResponse = res;
+          activate();
+          if (this._socketState === state && state.registered) eventCallback("open", "", _jsonSafe(res || {}), "");
+        },
+        Message: (res) => {
+          if (this._socketState !== state) return;
           const payload = _socketMessagePayload(res && res.data);
           eventCallback("message", payload.data, payload.dataJson, "");
-        });
-      }
-      if (typeof task.onError === "function") {
-        task.onError((err) => eventCallback("error", "", _jsonSafe(err || {}), _fmtErr(err)));
-      }
-      if (typeof task.onClose === "function") {
-        task.onClose((res) => {
+        },
+        Error: (err) => {
+          if (this._socketState === state) eventCallback("error", "", _jsonSafe(err || {}), _fmtErr(err));
+          else if (this._pendingSocket === state) fail(err);
+        },
+        Close: (res) => {
+          state.closed = true;
+          if (this._socketState !== state) {
+            if (this._pendingSocket === state) fail("WebSocket closed before opening");
+            return;
+          }
+          this._socketState = null;
           this._socketTask = null;
+          if (this._pendingSocket === state) this._pendingSocket = null;
           eventCallback("close", "", _jsonSafe(res || {}), "");
-        });
+        },
+      };
+      for (const [event, listener] of Object.entries(listeners)) {
+        if (typeof state.task[`on${event}`] === "function") {
+          state.listeners[event] = listener;
+          state.task[`on${event}`](listener);
+        }
       }
+      state.registered = true;
+      if (state.failed || state.closed) { this._disposeSocket(state); return false; }
+      // Keep a working connection while its replacement is still opening.
+      if (!this._socketState) {
+        this._socketState = state;
+        this._socketTask = state.task;
+      }
+      if (state.opened || (state.accepted && typeof state.task.onOpen !== "function")) activate();
+      if (state.accepted) state.finish(true, state.response);
+      if (state.opened && this._socketState === state) eventCallback("open", "", _jsonSafe(state.openResponse || {}), "");
       return true;
     } catch (e) {
-      this._socketTask = null;
-      callback("connectSocket", false, "", _fmtErr(e));
+      fail(e);
       return false;
     }
   }
@@ -1345,8 +1446,16 @@ class GodotSDK {
 
   closeSocket(code, reason, callback) {
     const task = this._socketTask;
+    const state = this._socketState;
+    const pending = this._pendingSocket;
+    if (pending) {
+      this._pendingSocket = null;
+      pending.failed = true;
+      if (pending !== state) this._disposeSocket(pending);
+      pending.finish(false, "WebSocket connection attempt canceled");
+    }
     if (!task) {
-      callback("closeSocket", false, "", "No active WebSocket connection");
+      callback("closeSocket", !!pending, pending ? "{}" : "", pending ? "" : "No active WebSocket connection");
       return;
     }
     if (typeof task.close !== "function") {
@@ -1357,12 +1466,17 @@ class GodotSDK {
     const closeCode = _num(code);
     if (closeCode > 0) options.code = closeCode;
     if (reason) options.reason = reason;
+    if (state) state.closing = true;
     try {
       task.close(Object.assign({}, options, {
         success: (res) => callback("closeSocket", true, _jsonSafe(res || {}), ""),
-        fail: (err) => callback("closeSocket", false, "", _fmtErr(err)),
+        fail: (err) => {
+          if (state) state.closing = false;
+          callback("closeSocket", false, "", _fmtErr(err));
+        },
       }));
     } catch (e) {
+      if (state) state.closing = false;
       callback("closeSocket", false, "", _fmtErr(e));
     }
   }
@@ -3817,6 +3931,178 @@ class GodotSDK {
 
   // ── File system bridge ─────────────────────────────────────────
 
+  async _persistentDigest(bytes) {
+    // A content digest catches same-size edits and writes that share an mtime.
+    // Share a 64 KiB / 4 ms yield budget across files, including unchanged ones.
+    // This does not depend on workers or crypto.subtle in the mini-game host.
+    const constants = [
+      0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+      0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+      0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+      0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+      0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+      0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+      0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+    ];
+    const hash = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+    const words = new Int32Array(64);
+    const budget = this._persistentHashBudget
+      || (this._persistentHashBudget = { bytes: 0, started: Date.now() });
+    let pendingBytes = 0;
+    const rotate = (value, count) => (value >>> count) | (value << (32 - count));
+    const length = bytes.byteLength;
+    const paddedLength = Math.ceil((length + 9) / 64) * 64;
+    for (let block = 0; block < paddedLength; block += 64) {
+      for (let i = 0; i < 16; i++) {
+        let word = 0;
+        for (let j = 0; j < 4; j++) {
+          const index = block + i * 4 + j;
+          word = (word << 8) | (index < length ? bytes[index] : index === length ? 0x80 : 0);
+        }
+        words[i] = word;
+      }
+      if (block + 64 === paddedLength) {
+        words[14] = Math.floor(length / 0x20000000);
+        words[15] = length << 3;
+      }
+      for (let i = 16; i < 64; i++) {
+        const x = words[i - 15], y = words[i - 2];
+        words[i] = words[i - 16] + (rotate(x, 7) ^ rotate(x, 18) ^ (x >>> 3))
+          + words[i - 7] + (rotate(y, 17) ^ rotate(y, 19) ^ (y >>> 10));
+      }
+      let [a, b, c, d, e, f, g, h] = hash;
+      for (let i = 0; i < 64; i++) {
+        const t1 = (h + (rotate(e, 6) ^ rotate(e, 11) ^ rotate(e, 25))
+          + ((e & f) ^ (~e & g)) + constants[i] + words[i]) | 0;
+        const t2 = ((rotate(a, 2) ^ rotate(a, 13) ^ rotate(a, 22))
+          + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+        h = g; g = f; f = e; e = (d + t1) | 0;
+        d = c; c = b; b = a; a = (t1 + t2) | 0;
+      }
+      hash[0] = (hash[0] + a) | 0; hash[1] = (hash[1] + b) | 0;
+      hash[2] = (hash[2] + c) | 0; hash[3] = (hash[3] + d) | 0;
+      hash[4] = (hash[4] + e) | 0; hash[5] = (hash[5] + f) | 0;
+      hash[6] = (hash[6] + g) | 0; hash[7] = (hash[7] + h) | 0;
+      pendingBytes += 64;
+      if ((block + 64) % 65536 === 0 || block + 64 === paddedLength) {
+        budget.bytes += pendingBytes;
+        pendingBytes = 0;
+        if (budget.bytes >= 65536 || Date.now() - budget.started >= 4) {
+          budget.bytes = 0;
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          budget.started = Date.now();
+        }
+      }
+    }
+    return hash.map((value) => (value >>> 0).toString(16).padStart(8, "0")).join("");
+  }
+
+  async syncPersistentFiles(roots, visitFiles) {
+    const { fs, userDataPath } = this._persistentHost("Persistent sync", "write");
+    const paths = [...new Set(roots.map(_normalizeVirtualPath))];
+    if (paths.length === 0 || typeof visitFiles !== "function") {
+      throw new Error("Persistent sync requires roots and a synchronous FS visitor");
+    }
+    const contains = (path) => paths.some((root) => root === "/" || path === root || path.startsWith(`${root}/`));
+    const baseline = this._persistentManifest || (this._persistentManifest = new Map());
+    const managedDirectories = this._persistentDirectories || (this._persistentDirectories = new Set());
+    const uncertain = this._persistentUncertainPaths || (this._persistentUncertainPaths = new Set());
+    const snapshot = new Map();
+    const directories = new Set();
+    // Snapshot names, not file contents. Each lazy reader supplies independent
+    // FS.readFile bytes, so hashing/writing only retains one file at a time.
+    visitFiles((path, readFile) => {
+      const virtualPath = _normalizeVirtualPath(path);
+      if (!contains(virtualPath)) throw new Error(`Persistent path is outside its roots: ${virtualPath}`);
+      if (readFile === null) {
+        directories.add(virtualPath);
+        return;
+      }
+      if (typeof readFile !== "function") throw new Error(`Invalid persistent file reader: ${virtualPath}`);
+      snapshot.set(virtualPath, readFile);
+    });
+    // Never enumerate the host directory for deletion: only files restored or
+    // written by this session are managed. Unrelated host files are preserved.
+    const staleFiles = [...new Set([...baseline.keys(), ...uncertain])]
+      .filter((path) => contains(path) && !snapshot.has(path));
+    const staleDirectories = [...managedDirectories]
+      .filter((path) => contains(path) && !paths.includes(path) && !directories.has(path))
+      .sort((a, b) => b.length - a.length);
+    const hostStat = async (path) => {
+      try {
+        const result = await this._stat(fs, `${userDataPath}${path}`);
+        return result.stats || result.stat || result;
+      } catch (error) {
+        if (!/ENOENT|no such file(?: or directory)?|file not exist/i.test(error.message)) throw error;
+        return null;
+      }
+    };
+    // Type changes cannot preserve the old save without a host transaction.
+    // Reject them before writing or deleting anything, rather than removing
+    // the last good copy to make room for a file/directory replacement.
+    for (const path of directories) {
+      if (managedDirectories.has(path)) continue;
+      const stats = await hostStat(path);
+      if (stats && (typeof stats.isDirectory !== "function" || !stats.isDirectory())) {
+        throw new Error(`Persistent directory conflicts with a host file: ${path}`);
+      }
+    }
+    for (const path of snapshot.keys()) {
+      if (baseline.has(path)) continue;
+      const stats = await hostStat(path);
+      if (stats && typeof stats.isDirectory === "function" && stats.isDirectory()) {
+        throw new Error(`Persistent file conflicts with a host directory: ${path}`);
+      }
+    }
+    const removeFile = async (path) => {
+      try {
+        await _fsCall(fs, "unlink", { filePath: `${userDataPath}${path}` });
+      } catch (error) {
+        if (!/ENOENT|no such file(?: or directory)?|file not exist/i.test(error.message)) throw error;
+      }
+      baseline.delete(path);
+      uncertain.delete(path);
+    };
+    const removeDirectory = async (path) => {
+      try {
+        await _fsCall(fs, "rmdir", { dirPath: `${userDataPath}${path}`, recursive: false });
+      } catch (error) {
+        // An untracked host file may keep an old directory nonempty. Retain it
+        // without recursive removal; a conflicting new file will fail clearly.
+        if (/ENOTEMPTY|(?:directory |folder )?not empty/i.test(error.message)) return;
+        if (!/ENOENT|no such file(?: or directory)?|file not exist/i.test(error.message)) throw error;
+      }
+      managedDirectories.delete(path);
+    };
+    for (const path of [...directories].sort((a, b) => a.length - b.length)) {
+      if (managedDirectories.has(path)) continue;
+      await this._ensureDir(fs, `${userDataPath}${path}`);
+      managedDirectories.add(path);
+    }
+    for (const [path, readFile] of snapshot) {
+      const bytes = _arrayBufferBytes(readFile());
+      if (!bytes) throw new Error(`Invalid persistent file: ${path}`);
+      const digest = await this._persistentDigest(bytes);
+      if (baseline.get(path) === digest && !uncertain.has(path)) continue;
+      // A failed host write may have partially changed the file. Keep it dirty
+      // even if the game subsequently restores its old contents or deletes it.
+      uncertain.add(path);
+      await this.writeFile(path, bytes);
+      baseline.set(path, digest);
+      uncertain.delete(path);
+    }
+    // Do not delete the source of a rename if writing its replacement failed.
+    // Each successful file advances its baseline, so a partial batch retries
+    // unfinished work without rewriting files already persisted successfully.
+    for (const path of staleFiles) {
+      await removeFile(path);
+    }
+    for (const path of staleDirectories) {
+      await removeDirectory(path);
+    }
+  }
+
   _persistentHost(operation, access = "read") {
     if (access === "write" && _isBlockedTikTokPersistentWrite()) {
       throw new Error(TIKTOK_PERSISTENT_WRITE_ERROR);
@@ -3896,6 +4182,8 @@ class GodotSDK {
     const platformRoot = `${userDataPath}${root}`;
     await this._accessOrMkdir(fs, platformRoot);
     const result = await _fsCall(fs, "readdir", { dirPath: platformRoot });
+    const managedDirectories = this._persistentDirectories || (this._persistentDirectories = new Set());
+    managedDirectories.add(root);
     const names = Array.isArray(result.files)
       ? result.files.filter((name) => name !== "." && name !== "..")
       : [];
@@ -3914,6 +4202,9 @@ class GodotSDK {
           throw new Error(`FileSystemManager.readFile returned non-binary data for ${child}`);
         }
         this.engine.copyToFS(child, bytes);
+        const baseline = this._persistentManifest || (this._persistentManifest = new Map());
+        baseline.set(child, await this._persistentDigest(bytes));
+        if (this._persistentUncertainPaths) this._persistentUncertainPaths.delete(child);
         entries += 1;
       } else {
         throw new Error(`FileSystemManager.stat returned an unknown entry type for ${child}`);
@@ -3930,7 +4221,12 @@ class GodotSDK {
       ? Promise.reject(new Error(TIKTOK_PERSISTENT_WRITE_ERROR))
       : !this.engine || typeof this.engine.copyFSToAdapter !== "function"
         ? Promise.reject(new Error("Persistent sync unavailable: Engine.copyFSToAdapter() is missing"))
-        : Promise.resolve().then(() => this.engine.copyFSToAdapter(this, paths));
+        : (this._persistentSyncTail || Promise.resolve())
+          .catch(() => {})
+          .then(() => this.engine.copyFSToAdapter(this, paths));
+    // Queue complete snapshots, including calls made while a previous write is
+    // pending. A failed operation must not poison later retries.
+    this._persistentSyncTail = operation;
 
     return operation
       .then(() => {

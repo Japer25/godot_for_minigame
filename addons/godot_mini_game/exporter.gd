@@ -62,7 +62,26 @@ const MANAGED_FILES: PackedStringArray = [
 const MANAGED_DIRS: PackedStringArray = ["audio", "engine", "images", "js", "subpacks"]
 
 var log_callback: Callable
+## Upper bound for the separate Godot resource-pack process, in seconds.
+var pack_timeout_seconds: float = 600.0
+var pack_log_directory := "user://godot-mini-game-export-logs"
+var last_pack_log_path := ""
+var _export_in_progress := false
+var _pack_in_progress := false
+var _active_pack_pid := -1
+var _cancel_requested := false
+var _pack_stop_result: Error = OK
+var _preserve_failed_stage := false
 var _publish_recovery_required := false
+
+
+func cancel_export() -> void:
+	# Only the process started by this exporter instance can be cancelled.
+	if _active_pack_pid > 0:
+		_cancel_requested = true
+		# Dock teardown may be the last frame; stopping cannot rely on the
+		# SceneTree timer resuming after the editor/plugin has been closed.
+		_pack_stop_result = _stop_pack_process(ERR_SKIP)
 
 
 # ─── Template store ────────────────────────────────────────────────
@@ -483,6 +502,28 @@ func export_mini_game(
 	preset_name: String,
 	output_dir: String,
 ) -> Error:
+	if _export_in_progress or _pack_in_progress:
+		return ERR_BUSY
+	_export_in_progress = true
+	var result := await _export_mini_game_impl(
+		platform, appid, orientation, preset_name, output_dir)
+	_export_in_progress = false
+	return result
+
+
+func _export_mini_game_impl(
+	platform: String,
+	appid: String,
+	orientation: String,
+	preset_name: String,
+	output_dir: String,
+) -> Error:
+	if _active_pack_pid > 0:
+		return ERR_BUSY
+	_cancel_requested = false
+	_pack_stop_result = OK
+	_preserve_failed_stage = false
+	last_pack_log_path = ""
 	_log("平台: %s | AppID: %s | 方向: %s" % [platform, appid, orientation])
 	_log("输出目录: %s" % output_dir)
 
@@ -491,6 +532,12 @@ func export_mini_game(
 		return ERR_INVALID_PARAMETER
 	if not SUPPORTED_ORIENTATIONS.has(orientation):
 		_log("[color=red]不支持的屏幕方向: %s[/color]" % orientation)
+		return ERR_INVALID_PARAMETER
+	if platform == "tiktok" and appid.strip_edges().is_empty():
+		_log("[color=red]TikTok 导出需要填写 Client Key[/color]")
+		return ERR_INVALID_PARAMETER
+	if not is_finite(pack_timeout_seconds) or pack_timeout_seconds <= 0:
+		_log("[color=red]资源导出超时必须是大于 0 的秒数[/color]")
 		return ERR_INVALID_PARAMETER
 
 	var output_check := OutputGuard.inspect(
@@ -535,7 +582,10 @@ func export_mini_game(
 	_log("步骤 1/7: 导出资源包 (.pck) ...")
 	err = await _export_pck(preset_name, staging_dir.path_join("engine/godot.zip"))
 	if err != OK:
-		_rm_rf(staging_dir)
+		if not _preserve_failed_stage:
+			_rm_rf(staging_dir)
+		else:
+			_log("[color=yellow]暂存目录已保留，请确认子进程结束后检查: %s[/color]" % staging_dir)
 		_log("[color=red]导出 PCK 失败: %s[/color]" % error_string(err))
 		return err
 
@@ -578,10 +628,11 @@ func export_mini_game(
 		_rm_rf(staging_dir)
 		return err
 
-	_log("步骤 6/7: 校验最终产物 ...")
+	_log("步骤 6/7: 生成产物校验清单 ...")
 	err = _write_output_manifest(staging_dir, platform, orientation, bundle)
-	if err == OK:
-		err = _validate_output_manifest(staging_dir, platform)
+	# _publish_staging performs the complete hash/configuration validation below,
+	# immediately before taking the publication lock. Do not scan the same staged
+	# files twice without any intervening writes.
 	if err != OK:
 		_rm_rf(staging_dir)
 		_log("[color=red]最终产物校验失败: %s[/color]" % error_string(err))
@@ -1250,6 +1301,15 @@ static func _file_metadata(path: String) -> Dictionary:
 	}
 
 
+static func _file_size(path: String) -> int:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if not file:
+		return -1
+	var size := file.get_length()
+	file.close()
+	return size
+
+
 func _remove_path(path: String) -> void:
 	if DirAccess.dir_exists_absolute(path):
 		_rm_rf(path)
@@ -1298,12 +1358,26 @@ func _rm_rf(global_path: String) -> void:
 ## time. `OS.create_process` returns immediately and we poll via SceneTree
 ## timer, yielding to the editor so the dock stays responsive.
 ##
-## Trade-off: `OS.create_process` does not capture stdout/stderr, so the
-## sub-process Godot's warnings are lost. In return we get a non-blocking
-## UI and a heartbeat log every second. If a deeper failure investigation
-## is needed, run the command from a terminal manually — the log line
-## "执行: <cmd>" prints the full invocation.
+## Failed, cancelled, and timed-out jobs retain their full child log. Once
+## termination is confirmed, archive that log outside staging before cleanup.
 func _export_pck(preset_name: String, pck_path: String) -> Error:
+	if _pack_in_progress or _active_pack_pid > 0:
+		return ERR_BUSY
+	_pack_in_progress = true
+	_cancel_requested = false
+	_pack_stop_result = OK
+	_preserve_failed_stage = false
+	last_pack_log_path = ""
+	var result := await _export_pck_impl(preset_name, pck_path)
+	_pack_in_progress = false
+	return result
+
+
+func _export_pck_impl(preset_name: String, pck_path: String) -> Error:
+	if _active_pack_pid > 0:
+		return ERR_BUSY
+	if not is_finite(pack_timeout_seconds) or pack_timeout_seconds <= 0:
+		return ERR_INVALID_PARAMETER
 	var godot_path := OS.get_executable_path()
 	var project_path := ProjectSettings.globalize_path("res://")
 	var global_pck := ProjectSettings.globalize_path(pck_path)
@@ -1321,45 +1395,114 @@ func _export_pck(preset_name: String, pck_path: String) -> Error:
 
 	_log("  执行: %s %s" % [godot_path, " ".join(args)])
 
-	var pid := OS.create_process(godot_path, args)
+	var pid := _create_pack_process(godot_path, args)
 	if pid <= 0:
 		_log("  [color=red]无法启动 Godot 子进程[/color]")
 		return ERR_CANT_FORK
 
-	var tree: SceneTree = Engine.get_main_loop() as SceneTree
-	var elapsed_ms: int = 0
-	var POLL_MS := 250
-	while OS.is_process_running(pid):
-		if tree:
-			await tree.create_timer(POLL_MS / 1000.0).timeout
-		else:
-			OS.delay_msec(POLL_MS)
-		elapsed_ms += POLL_MS
-		if elapsed_ms % 4000 == 0:
-			_log("  ...导出中 (%ds)" % (elapsed_ms / 1000))
+	_active_pack_pid = pid
+	_pack_stop_result = OK
+	var started_ms := Time.get_ticks_msec()
+	var wait_error := await _wait_for_pack_process()
+	if wait_error != OK:
+		_log_child_process_tail(child_log)
+		_preserve_pack_failure_log(child_log)
+		return wait_error
 
 	var exit_code := OS.get_process_exit_code(pid)
 	if exit_code != 0:
 		_log_child_process_tail(child_log)
+		_preserve_pack_failure_log(child_log)
 		_log("  [color=red]导出 PCK 失败 (exit=%d)，请在终端手动重跑命令查看详细错误[/color]" % exit_code)
 		return ERR_COMPILATION_FAILED
 
 	if not FileAccess.file_exists(pck_path):
 		_log_child_process_tail(child_log)
+		_preserve_pack_failure_log(child_log)
 		_log("  [color=red]PCK 文件未生成[/color]")
 		return ERR_FILE_NOT_FOUND
 
 	if FileAccess.file_exists(child_log):
 		DirAccess.remove_absolute(global_child_log)
-	_log("  PCK 已导出 → engine/godot.zip (耗时 %.1fs)" % (elapsed_ms / 1000.0))
+	_log("  PCK 已导出 → engine/godot.zip (耗时 %.1fs)" % (
+		(Time.get_ticks_msec() - started_ms) / 1000.0))
 	return OK
+
+
+func _create_pack_process(executable: String, args: PackedStringArray) -> int:
+	return OS.create_process(executable, args)
+
+
+func _wait_for_pack_process() -> Error:
+	var tree := Engine.get_main_loop() as SceneTree
+	var started_ms := Time.get_ticks_msec()
+	var next_heartbeat_ms := started_ms + 4000
+	while _active_pack_pid > 0 and _pack_stop_result == OK and OS.is_process_running(_active_pack_pid):
+		var now := Time.get_ticks_msec()
+		if _cancel_requested or now - started_ms >= pack_timeout_seconds * 1000.0:
+			var stop_error := ERR_SKIP if _cancel_requested else ERR_TIMEOUT
+			_log("  正在取消资源导出 ..." if _cancel_requested else "  [color=red]资源导出超时，正在停止子进程[/color]")
+			_pack_stop_result = _stop_pack_process(stop_error)
+			return _pack_stop_result
+		if tree:
+			await tree.create_timer(0.1).timeout
+		else:
+			OS.delay_msec(100)
+		if now >= next_heartbeat_ms:
+			_log("  ...导出中 (%ds)" % ((now - started_ms) / 1000))
+			next_heartbeat_ms = now + 4000
+	if _pack_stop_result != OK:
+		return _pack_stop_result
+	_active_pack_pid = -1
+	return ERR_SKIP if _cancel_requested else OK
+
+
+func _stop_pack_process(reason: Error) -> Error:
+	if _active_pack_pid <= 0:
+		return reason
+	if not OS.is_process_running(_active_pack_pid):
+		_active_pack_pid = -1
+		return reason
+	var kill_error := OS.kill(_active_pack_pid)
+	if kill_error != OK:
+		_preserve_failed_stage = true
+		_log("  [color=red]无法停止导出子进程 %d: %s[/color]" % [
+			_active_pack_pid, error_string(kill_error)])
+		return kill_error
+	# Godot's Unix kill waits for the child and reaps it. Polling that PID
+	# again causes ECHILD errors. Windows requests termination but drops the
+	# process handle immediately; retain staging rather than race pending I/O.
+	if OS.get_name() == "Windows":
+		_preserve_failed_stage = true
+	_active_pack_pid = -1
+	return reason
+
+
+func _preserve_pack_failure_log(path: String) -> void:
+	if not FileAccess.file_exists(path):
+		return
+	if _preserve_failed_stage:
+		last_pack_log_path = ProjectSettings.globalize_path(path)
+	else:
+		var log_name := "export-%d-%d.log" % [OS.get_process_id(), Time.get_ticks_usec()]
+		var target := ProjectSettings.globalize_path(pack_log_directory.path_join(log_name))
+		if _copy_file(path, target) == OK:
+			last_pack_log_path = target
+		else:
+			# Retain the original if archiving fails (for example, disk full).
+			_preserve_failed_stage = true
+			last_pack_log_path = ProjectSettings.globalize_path(path)
+	_log("  完整导出日志: %s" % last_pack_log_path)
 
 
 func _log_child_process_tail(path: String) -> void:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if not file:
 		return
-	var lines := file.get_as_text().split("\n", false)
+	# Bound diagnostic reads even when a failing importer produces a huge log.
+	var start := maxi(0, file.get_length() - 65536)
+	file.seek(start)
+	var lines := file.get_buffer(file.get_length() - start).get_string_from_utf8().split("\n", false)
 	file.close()
 	var first := maxi(0, lines.size() - 20)
 	for index in range(first, lines.size()):
@@ -1546,7 +1689,14 @@ func _patch_godot_js(path: String, platform: String = "wechat") -> Error:
 	# keeps the engine wrapper platform-neutral and avoids exposing raw FS.
 	var _module_copy_anchor := "Module[\"copyToFS\"]=GodotFS.copy_to_fs;"
 	var _module_copy_marker := "Module[\"copyFSToAdapter\"]="
-	var _module_copy_patch := "Module[\"copyFSToAdapter\"]=async function(adapter,roots){if(!adapter||typeof adapter.writeFile!==\"function\")throw new Error(\"Persistent adapter must provide writeFile(path, data)\");var scan=async function(path){var entries;try{entries=FS.readdir(path)}catch(error){if(error&&error.errno===GodotFS.ENOENT)return;throw error}for(const name of entries){if(name===\".\"||name===\"..\")continue;const child=path.replace(/\\/$/,\"\")+\"/\"+name;const stat=FS.stat(child);if(FS.isDir(stat.mode))await scan(child);else if(FS.isFile(stat.mode))await adapter.writeFile(child,FS.readFile(child))}};for(const root of(Array.isArray(roots)?roots:GodotFS._mount_points))await scan(root)};"
+	var _module_copy_legacy := "Module[\"copyFSToAdapter\"]=async function(adapter,roots){if(!adapter||typeof adapter.writeFile!==\"function\")throw new Error(\"Persistent adapter must provide writeFile(path, data)\");var scan=async function(path){var entries;try{entries=FS.readdir(path)}catch(error){if(error&&error.errno===GodotFS.ENOENT)return;throw error}for(const name of entries){if(name===\".\"||name===\"..\")continue;const child=path.replace(/\\/$/,\"\")+\"/\"+name;const stat=FS.stat(child);if(FS.isDir(stat.mode))await scan(child);else if(FS.isFile(stat.mode))await adapter.writeFile(child,FS.readFile(child))}};for(const root of(Array.isArray(roots)?roots:GodotFS._mount_points))await scan(root)};"
+	var _module_copy_patch := "Module[\"copyFSToAdapter\"]=function(adapter,roots){if(!adapter||typeof adapter.syncPersistentFiles!==\"function\")throw new Error(\"Persistent adapter must provide syncPersistentFiles(roots, visitFiles)\");var paths=Array.isArray(roots)?roots:GodotFS._mount_points;return adapter.syncPersistentFiles(paths,function(visit){var scan=function(path){var entries;try{entries=FS.readdir(path)}catch(error){if(error&&error.errno===GodotFS.ENOENT)return;throw error}visit(path,null);for(const name of entries){if(name===\".\"||name===\"..\")continue;const child=path.replace(/\\/$/,\"\")+\"/\"+name;const stat=FS.stat(child);if(FS.isDir(stat.mode))scan(child);else if(FS.isFile(stat.mode))visit(child,function(){return FS.readFile(child)})}};for(const root of paths)scan(root)})};"
+	if content.find(_module_copy_legacy) != -1:
+		content = content.replace(_module_copy_legacy, _module_copy_patch)
+		modified = true
+	elif content.find(_module_copy_marker) != -1 and content.find(_module_copy_patch) == -1:
+		_log("  [color=red]godot.js 包含无法识别的持久化同步补丁[/color]")
+		return ERR_FILE_CORRUPT
 	if content.find(_module_copy_marker) == -1:
 		if content.count(_module_copy_anchor) != 1:
 			_log("  [color=red]godot.js 缺少唯一的 Module.copyToFS 补丁锚点[/color]")
@@ -1674,8 +1824,7 @@ func _patch_godot_js(path: String, platform: String = "wechat") -> Error:
 		out.close()
 		if write_error != OK:
 			return write_error
-		var metadata := _file_metadata(path)
-		if int(metadata.get("size", -1)) != content.to_utf8_buffer().size():
+		if _file_size(path) != content.to_utf8_buffer().size():
 			return ERR_FILE_CORRUPT
 		_log("  已注入 mini-game 兼容补丁到 godot.js")
 	return OK
@@ -1746,26 +1895,40 @@ func _copy_file(src: String, dst: String) -> Error:
 		_log("  [color=red]无法读取: %s[/color]" % src)
 		return FileAccess.get_open_error()
 	var source_size := file.get_length()
-	var content := file.get_buffer(source_size)
-	file.close()
-	if content.size() != source_size:
-		return ERR_FILE_CORRUPT
 
 	var dir := dst.get_base_dir()
 	var err := DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
 	if err != OK:
+		file.close()
 		return err
 
 	var out := FileAccess.open(dst, FileAccess.WRITE)
 	if not out:
-		return FileAccess.get_open_error()
-	out.store_buffer(content)
+		var open_error := FileAccess.get_open_error()
+		file.close()
+		return open_error
+	var copied: int = 0
+	while copied < source_size:
+		var chunk_size := mini(1024 * 1024, source_size - copied)
+		var chunk := file.get_buffer(chunk_size)
+		if chunk.size() != chunk_size:
+			file.close()
+			out.close()
+			return ERR_FILE_CORRUPT
+		out.store_buffer(chunk)
+		if out.get_error() != OK:
+			var chunk_error := out.get_error()
+			file.close()
+			out.close()
+			return chunk_error
+		copied += chunk.size()
+	file.close()
+	out.flush()
 	var write_error := out.get_error()
 	out.close()
 	if write_error != OK:
 		return write_error
-	var metadata := _file_metadata(dst)
-	return OK if int(metadata.get("size", -1)) == content.size() else ERR_FILE_CORRUPT
+	return OK if _file_size(dst) == source_size else ERR_FILE_CORRUPT
 
 
 func _copy_template(
@@ -1802,8 +1965,7 @@ func _write_text(path: String, text: String) -> Error:
 	f.close()
 	if write_error != OK:
 		return write_error
-	var metadata := _file_metadata(path)
-	return OK if int(metadata.get("size", -1)) == text.to_utf8_buffer().size() else ERR_FILE_CORRUPT
+	return OK if _file_size(path) == text.to_utf8_buffer().size() else ERR_FILE_CORRUPT
 
 
 func _generate_placeholder_images(output_dir: String) -> Error:
@@ -1852,8 +2014,7 @@ func _write_buffer(path: String, data: PackedByteArray) -> Error:
 	f.close()
 	if write_error != OK:
 		return write_error
-	var metadata := _file_metadata(path)
-	return OK if int(metadata.get("size", -1)) == data.size() else ERR_FILE_CORRUPT
+	return OK if _file_size(path) == data.size() else ERR_FILE_CORRUPT
 
 
 static func _json_string_contents(value: String) -> String:

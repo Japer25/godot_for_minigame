@@ -110,7 +110,8 @@ Dock 位于编辑器底部，依次包含以下字段：
 - 微信：在 [微信公众平台](https://mp.weixin.qq.com) 注册小游戏后获得的 `wx...` ID。
 - 抖音：在 [抖音开放平台](https://developer.open-douyin.com) 获得的 `tt...` ID。
 - TikTok：为 Native Mini Game 注册的 **Client Key**。
-- 如果只做本地联调，可以留空或填任意字符串；上传时必须是真实 AppID。
+- 微信、抖音本地联调可填占位值，上传时必须是真实 AppID。TikTok 在资源导出前
+  会检查 Client Key，不能为空。
 
 ### 屏幕方向 Orientation
 
@@ -145,6 +146,10 @@ Dock 自动扫描 `export_presets.cfg` 里的所有预设，选择第 3 步创�
 ```
 
 完成后会弹窗提示导出路径。任何步骤报错都会在日志里用红色标出。
+
+资源打包子进程的超时时间可配置，默认 600 秒。运行期间可点击「取消导出」，
+停止本次任务并保留上次已发布的产物。失败或取消后，日志会给出完整诊断文件路径；
+如果无法确认子进程已经退出，请保留提示的暂存目录，待进程停止后再检查。
 
 普通发布错误会在同一进程内用同级 backup 回滚受管路径。进程或系统突然中断则不同：
 导出器会保留输出旁的 `.name.godot-mini-game.lock/journal.json`、staging 和可能存在的
@@ -308,7 +313,7 @@ Native 编译/调试入口是 `ttmg dev`；CI 另通过其依赖的 `ttmg-pack.c
 
 所有异步接口都通过 **信号** 回调，不要用 await；同步接口（`storage_*`、`vibrate_*`）直接返回。
 
-224 个公开方法和 83 个信号描述的是完整 Bridge 接口面，不代表三个平台全部兼容。
+225 个公开方法和 84 个信号描述的是完整 Bridge 接口面，不代表三个平台全部兼容。
 同名 API 只有在所选 `wx`、`tt` 或 `TTMinis.game` 宿主暴露对应能力时才会分发；
 支付等平台特有流程走显式映射。依赖某个接口前请调用 `can_i_use()`，并用目标宿主
 和目标版本实测。
@@ -736,6 +741,22 @@ MiniGameSDK.http_request(
 )
 ```
 
+并发请求请使用 `http_request_with_id()` 与独立的
+`http_request_completed(request_id, status_code, data, error)` 信号。ID 在当前
+SDK 实例内唯一；完成信号延迟到方法返回之后发送（包括非小游戏环境的错误），
+因此调用方可以先保存 ID。原有 `http_request()` / `http_response` 保持不变。
+
+```gdscript
+var requests := {}
+MiniGameSDK.http_request_completed.connect(func(request_id, status, data, err):
+    var purpose = requests.get(request_id, "")
+    requests.erase(request_id)
+    print(purpose, status, data, err)
+)
+requests[MiniGameSDK.http_request_with_id("https://api.example.com/profile")] = "profile"
+requests[MiniGameSDK.http_request_with_id("https://api.example.com/inventory")] = "inventory"
+```
+
 > 上线前必须在微信后台 **开发设置 > 服务器域名** 里添加你的 API 域名到 `request` 合法域名。
 
 ### 文件传输
@@ -767,7 +788,7 @@ MiniGameSDK.upload_file(
 )
 ```
 
-当前 typed wrapper 覆盖基础成功/失败结果、HTTP 状态码和原始 JSON。`DownloadTask` / `UploadTask` 的进度和 abort 控制还没有暴露成 GDScript 类型化方法；如果需要任务级进度事件，可以先用 `call_api()` 或扩展 JS bridge。
+当前 typed wrapper 覆盖基础成功/失败结果、HTTP 状态码和原始 JSON。`DownloadTask` / `UploadTask` 的进度和 abort 控制还没有暴露成 GDScript 方法；需要这些能力时请扩展 JS bridge。`call_api()` 等待实际操作结果，不会暴露 Task 句柄。
 
 ### 文件系统
 
@@ -1506,6 +1527,16 @@ MiniGameSDK.call_api("setClipboardData", {"data": "hello"})
 # 对 getStorageSync(key) 这类位置参数 / 同步 API，使用 _args。
 MiniGameSDK.call_api("getStorageSync", {"_args": ["level"]})
 ```
+
+可选的第三个参数 `completion_mode` 指定完成方式：
+
+- `"auto"`（默认）：异步操作由回调或 Promise 完成。已知返回 Task 的接口（`request`、`downloadFile`、`uploadFile`、`connectSocket`、`loadSubpackage`、`preDownloadSubpackage`）及带 `abort()` 的句柄会等待回调；其他直接返回值保留同步 getter 的行为，包括名称不以 `Sync` 结尾的接口。
+- `"async"`：忽略直接返回值，等待回调或 Promise。其他返回不透明句柄的异步接口应显式选用此模式。
+- `"sync"`：使用直接返回值，包括 `undefined`；若返回 Promise 则仍然等待它。`_args` 只控制位置参数传递，与完成模式独立。
+
+例如 `MiniGameSDK.call_api("customAsyncApi", {"key": "value"}, "async")`
+会等待该接口的回调。即使平台同时返回 Promise 并触发回调，也只结算一次。
+通用桥接不会自行设置超时。
 
 `call_api()` 是覆盖长尾 API 的兜底能力。登录、支付、广告、文件系统、生命周期等高频或语义复杂能力仍建议优先使用强类型方法，方便获得稳定参数、返回值和错误语义。
 

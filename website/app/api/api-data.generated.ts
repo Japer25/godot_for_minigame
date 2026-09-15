@@ -279,7 +279,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "storage",
-    "line": 298
+    "line": 314
   },
   {
     "name": "storage_get",
@@ -298,7 +298,7 @@ export const apiMethods = [
     ],
     "returnType": "String",
     "category": "storage",
-    "line": 303
+    "line": 319
   },
   {
     "name": "storage_remove",
@@ -312,7 +312,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "storage",
-    "line": 317
+    "line": 333
   },
   {
     "name": "storage_clear",
@@ -320,7 +320,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "storage",
-    "line": 322
+    "line": 338
   },
   {
     "name": "storage_info",
@@ -328,7 +328,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "Dictionary",
     "category": "storage",
-    "line": 329
+    "line": 345
   },
   {
     "name": "login",
@@ -336,7 +336,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "auth",
-    "line": 341
+    "line": 357
   },
   {
     "name": "check_session",
@@ -344,7 +344,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "auth",
-    "line": 354
+    "line": 370
   },
   {
     "name": "get_user_info",
@@ -352,7 +352,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "auth",
-    "line": 367
+    "line": 383
   },
   {
     "name": "get_privacy_setting",
@@ -360,7 +360,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "privacy",
-    "line": 382
+    "line": 398
   },
   {
     "name": "require_privacy_authorize",
@@ -368,7 +368,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "privacy",
-    "line": 397
+    "line": 413
   },
   {
     "name": "open_privacy_contract",
@@ -376,7 +376,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "privacy",
-    "line": 410
+    "line": 426
   },
   {
     "name": "start_privacy_authorization_listener",
@@ -384,7 +384,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "privacy",
-    "line": 427
+    "line": 443
   },
   {
     "name": "resolve_privacy_authorization",
@@ -403,7 +403,7 @@ export const apiMethods = [
     ],
     "returnType": "bool",
     "category": "privacy",
-    "line": 445
+    "line": 461
   },
   {
     "name": "expose_privacy_authorization",
@@ -411,7 +411,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "bool",
     "category": "privacy",
-    "line": 451
+    "line": 467
   },
   {
     "name": "agree_privacy_authorization",
@@ -425,7 +425,7 @@ export const apiMethods = [
     ],
     "returnType": "bool",
     "category": "privacy",
-    "line": 455
+    "line": 471
   },
   {
     "name": "disagree_privacy_authorization",
@@ -433,7 +433,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "bool",
     "category": "privacy",
-    "line": 459
+    "line": 475
   },
   {
     "name": "get_setting",
@@ -447,7 +447,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "authorization",
-    "line": 465
+    "line": 481
   },
   {
     "name": "open_setting",
@@ -461,7 +461,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "authorization",
-    "line": 478
+    "line": 494
   },
   {
     "name": "authorize",
@@ -475,7 +475,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "authorization",
-    "line": 491
+    "line": 507
   },
   {
     "name": "create_user_info_button",
@@ -489,7 +489,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "native-buttons",
-    "line": 521
+    "line": 537
   },
   {
     "name": "create_open_setting_button",
@@ -503,7 +503,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "native-buttons",
-    "line": 531
+    "line": 547
   },
   {
     "name": "create_game_club_button",
@@ -517,7 +517,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "native-buttons",
-    "line": 541
+    "line": 557
   },
   {
     "name": "show_native_button",
@@ -531,7 +531,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "native-buttons",
-    "line": 551
+    "line": 567
   },
   {
     "name": "hide_native_button",
@@ -545,7 +545,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "native-buttons",
-    "line": 555
+    "line": 571
   },
   {
     "name": "destroy_native_button",
@@ -559,7 +559,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "native-buttons",
-    "line": 559
+    "line": 575
   },
   {
     "name": "stop_native_button_tap_listener",
@@ -573,7 +573,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "native-buttons",
-    "line": 563
+    "line": 579
   },
   {
     "name": "set_enable_debug",
@@ -587,7 +587,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 599
+    "line": 615
   },
   {
     "name": "get_log_manager",
@@ -601,7 +601,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 606
+    "line": 622
   },
   {
     "name": "log_manager_write",
@@ -620,7 +620,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 613
+    "line": 629
   },
   {
     "name": "log_manager_debug",
@@ -634,7 +634,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 621
+    "line": 637
   },
   {
     "name": "log_manager_info",
@@ -648,7 +648,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 625
+    "line": 641
   },
   {
     "name": "log_manager_log",
@@ -662,7 +662,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 629
+    "line": 645
   },
   {
     "name": "log_manager_warn",
@@ -676,7 +676,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 633
+    "line": 649
   },
   {
     "name": "get_realtime_log_manager",
@@ -684,7 +684,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "debug",
-    "line": 637
+    "line": 653
   },
   {
     "name": "realtime_log_write",
@@ -703,7 +703,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 644
+    "line": 660
   },
   {
     "name": "realtime_log_info",
@@ -717,7 +717,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 652
+    "line": 668
   },
   {
     "name": "realtime_log_warn",
@@ -731,7 +731,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 656
+    "line": 672
   },
   {
     "name": "realtime_log_error",
@@ -745,7 +745,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 660
+    "line": 676
   },
   {
     "name": "realtime_log_set_filter_msg",
@@ -759,7 +759,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 664
+    "line": 680
   },
   {
     "name": "realtime_log_add_filter_msg",
@@ -773,7 +773,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 671
+    "line": 687
   },
   {
     "name": "realtime_log_tag",
@@ -787,7 +787,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "debug",
-    "line": 678
+    "line": 694
   },
   {
     "name": "get_account_info",
@@ -795,7 +795,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "Dictionary",
     "category": "debug",
-    "line": 693
+    "line": 709
   },
   {
     "name": "share_app",
@@ -819,7 +819,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "share",
-    "line": 699
+    "line": 715
   },
   {
     "name": "show_share_menu",
@@ -827,7 +827,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "share",
-    "line": 704
+    "line": 720
   },
   {
     "name": "hide_share_menu",
@@ -835,7 +835,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "share",
-    "line": 709
+    "line": 725
   },
   {
     "name": "create_rewarded_ad",
@@ -849,7 +849,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "ads",
-    "line": 716
+    "line": 732
   },
   {
     "name": "show_rewarded_ad",
@@ -857,7 +857,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "ads",
-    "line": 723
+    "line": 739
   },
   {
     "name": "create_banner_ad",
@@ -871,7 +871,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "ads",
-    "line": 738
+    "line": 754
   },
   {
     "name": "show_banner_ad",
@@ -879,7 +879,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "ads",
-    "line": 745
+    "line": 761
   },
   {
     "name": "hide_banner_ad",
@@ -887,7 +887,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "ads",
-    "line": 750
+    "line": 766
   },
   {
     "name": "destroy_banner_ad",
@@ -895,7 +895,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "ads",
-    "line": 755
+    "line": 771
   },
   {
     "name": "create_interstitial_ad",
@@ -909,7 +909,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "ads",
-    "line": 762
+    "line": 778
   },
   {
     "name": "show_interstitial_ad",
@@ -917,7 +917,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "ads",
-    "line": 769
+    "line": 785
   },
   {
     "name": "request_payment",
@@ -931,7 +931,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "payment",
-    "line": 793
+    "line": 809
   },
   {
     "name": "add_shortcut",
@@ -945,7 +945,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "tiktok-missions",
-    "line": 808
+    "line": 824
   },
   {
     "name": "get_shortcut_mission_reward",
@@ -959,7 +959,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "tiktok-missions",
-    "line": 815
+    "line": 831
   },
   {
     "name": "start_entrance_mission",
@@ -973,7 +973,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "tiktok-missions",
-    "line": 823
+    "line": 839
   },
   {
     "name": "get_entrance_mission_reward",
@@ -987,7 +987,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "tiktok-missions",
-    "line": 830
+    "line": 846
   },
   {
     "name": "vibrate_short",
@@ -1001,7 +1001,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "input",
-    "line": 854
+    "line": 870
   },
   {
     "name": "vibrate_long",
@@ -1009,7 +1009,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "input",
-    "line": 859
+    "line": 875
   },
   {
     "name": "show_keyboard",
@@ -1033,7 +1033,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "input",
-    "line": 866
+    "line": 882
   },
   {
     "name": "hide_keyboard",
@@ -1041,7 +1041,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "input",
-    "line": 880
+    "line": 896
   },
   {
     "name": "http_request",
@@ -1070,7 +1070,36 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "http",
-    "line": 887
+    "line": 903
+  },
+  {
+    "name": "http_request_with_id",
+    "signature": "http_request_with_id(url: String, method: String = \"GET\", data: String = \"\", headers: Dictionary = {}) -> int",
+    "parameters": [
+      {
+        "name": "url",
+        "type": "String",
+        "defaultValue": ""
+      },
+      {
+        "name": "method",
+        "type": "String",
+        "defaultValue": "\"GET\""
+      },
+      {
+        "name": "data",
+        "type": "String",
+        "defaultValue": "\"\""
+      },
+      {
+        "name": "headers",
+        "type": "Dictionary",
+        "defaultValue": "{}"
+      }
+    ],
+    "returnType": "int",
+    "category": "http",
+    "line": 920
   },
   {
     "name": "download_file",
@@ -1114,7 +1143,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "http",
-    "line": 901
+    "line": 942
   },
   {
     "name": "upload_file",
@@ -1168,7 +1197,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "http",
-    "line": 924
+    "line": 965
   },
   {
     "name": "connect_socket",
@@ -1212,7 +1241,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "websocket",
-    "line": 960
+    "line": 1001
   },
   {
     "name": "send_socket_message",
@@ -1226,7 +1255,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "websocket",
-    "line": 984
+    "line": 1025
   },
   {
     "name": "close_socket",
@@ -1245,7 +1274,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "websocket",
-    "line": 991
+    "line": 1032
   },
   {
     "name": "call_file_system",
@@ -1264,7 +1293,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1028
+    "line": 1069
   },
   {
     "name": "file_system_access",
@@ -1278,7 +1307,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1035
+    "line": 1076
   },
   {
     "name": "file_system_read_file",
@@ -1307,7 +1336,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1039
+    "line": 1080
   },
   {
     "name": "file_system_write_file",
@@ -1331,7 +1360,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1051
+    "line": 1092
   },
   {
     "name": "file_system_append_file",
@@ -1355,7 +1384,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1059
+    "line": 1100
   },
   {
     "name": "file_system_mkdir",
@@ -1374,7 +1403,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1067
+    "line": 1108
   },
   {
     "name": "file_system_readdir",
@@ -1388,7 +1417,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1074
+    "line": 1115
   },
   {
     "name": "file_system_unlink",
@@ -1402,7 +1431,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1078
+    "line": 1119
   },
   {
     "name": "file_system_save_file",
@@ -1421,7 +1450,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1082
+    "line": 1123
   },
   {
     "name": "file_system_get_saved_file_list",
@@ -1429,7 +1458,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1089
+    "line": 1130
   },
   {
     "name": "file_system_remove_saved_file",
@@ -1443,7 +1472,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1093
+    "line": 1134
   },
   {
     "name": "file_system_get_file_info",
@@ -1462,7 +1491,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1097
+    "line": 1138
   },
   {
     "name": "file_system_copy_file",
@@ -1481,7 +1510,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1104
+    "line": 1145
   },
   {
     "name": "file_system_rename",
@@ -1500,7 +1529,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1111
+    "line": 1152
   },
   {
     "name": "file_system_rmdir",
@@ -1519,7 +1548,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1118
+    "line": 1159
   },
   {
     "name": "file_system_stat",
@@ -1538,7 +1567,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1125
+    "line": 1166
   },
   {
     "name": "file_system_unzip",
@@ -1557,7 +1586,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "filesystem",
-    "line": 1132
+    "line": 1173
   },
   {
     "name": "load_subpackage",
@@ -1571,7 +1600,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "subpackages",
-    "line": 1147
+    "line": 1188
   },
   {
     "name": "pre_download_subpackage",
@@ -1590,7 +1619,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "subpackages",
-    "line": 1157
+    "line": 1198
   },
   {
     "name": "create_worker",
@@ -1609,7 +1638,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "worker",
-    "line": 1185
+    "line": 1226
   },
   {
     "name": "worker_post_message",
@@ -1623,7 +1652,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "worker",
-    "line": 1196
+    "line": 1237
   },
   {
     "name": "worker_terminate",
@@ -1631,7 +1660,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "worker",
-    "line": 1203
+    "line": 1244
   },
   {
     "name": "choose_media",
@@ -1670,7 +1699,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "media",
-    "line": 1233
+    "line": 1274
   },
   {
     "name": "choose_image",
@@ -1694,7 +1723,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "media",
-    "line": 1257
+    "line": 1298
   },
   {
     "name": "preview_image",
@@ -1723,7 +1752,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "media",
-    "line": 1270
+    "line": 1311
   },
   {
     "name": "save_image_to_photos_album",
@@ -1737,7 +1766,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "media",
-    "line": 1282
+    "line": 1323
   },
   {
     "name": "compress_image",
@@ -1766,7 +1795,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "media",
-    "line": 1289
+    "line": 1330
   },
   {
     "name": "create_camera",
@@ -1810,7 +1839,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "camera",
-    "line": 1311
+    "line": 1352
   },
   {
     "name": "camera_take_photo",
@@ -1824,7 +1853,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "camera",
-    "line": 1335
+    "line": 1376
   },
   {
     "name": "camera_start_record",
@@ -1832,7 +1861,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "camera",
-    "line": 1342
+    "line": 1383
   },
   {
     "name": "camera_stop_record",
@@ -1846,7 +1875,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "camera",
-    "line": 1349
+    "line": 1390
   },
   {
     "name": "camera_set_zoom",
@@ -1860,7 +1889,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "camera",
-    "line": 1356
+    "line": 1397
   },
   {
     "name": "camera_listen_frame_change",
@@ -1874,7 +1903,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "camera",
-    "line": 1363
+    "line": 1404
   },
   {
     "name": "camera_close_frame_change",
@@ -1882,7 +1911,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "camera",
-    "line": 1370
+    "line": 1411
   },
   {
     "name": "camera_destroy",
@@ -1890,7 +1919,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "camera",
-    "line": 1377
+    "line": 1418
   },
   {
     "name": "create_video",
@@ -1904,7 +1933,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "video",
-    "line": 1404
+    "line": 1445
   },
   {
     "name": "set_video_properties",
@@ -1918,7 +1947,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "video",
-    "line": 1414
+    "line": 1455
   },
   {
     "name": "get_video_state",
@@ -1926,7 +1955,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "video",
-    "line": 1421
+    "line": 1462
   },
   {
     "name": "video_play",
@@ -1934,7 +1963,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "video",
-    "line": 1428
+    "line": 1469
   },
   {
     "name": "video_pause",
@@ -1942,7 +1971,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "video",
-    "line": 1435
+    "line": 1476
   },
   {
     "name": "video_stop",
@@ -1950,7 +1979,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "video",
-    "line": 1442
+    "line": 1483
   },
   {
     "name": "video_seek",
@@ -1964,7 +1993,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "video",
-    "line": 1449
+    "line": 1490
   },
   {
     "name": "video_request_full_screen",
@@ -1978,7 +2007,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "video",
-    "line": 1456
+    "line": 1497
   },
   {
     "name": "video_exit_full_screen",
@@ -1986,7 +2015,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "video",
-    "line": 1463
+    "line": 1504
   },
   {
     "name": "stop_video_listener",
@@ -2000,7 +2029,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "video",
-    "line": 1470
+    "line": 1511
   },
   {
     "name": "video_destroy",
@@ -2008,7 +2037,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "video",
-    "line": 1477
+    "line": 1518
   },
   {
     "name": "get_recorder_manager",
@@ -2016,7 +2045,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "recorder",
-    "line": 1501
+    "line": 1542
   },
   {
     "name": "recorder_start",
@@ -2030,7 +2059,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "recorder",
-    "line": 1510
+    "line": 1551
   },
   {
     "name": "recorder_pause",
@@ -2038,7 +2067,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "recorder",
-    "line": 1517
+    "line": 1558
   },
   {
     "name": "recorder_resume",
@@ -2046,7 +2075,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "recorder",
-    "line": 1524
+    "line": 1565
   },
   {
     "name": "recorder_stop",
@@ -2054,7 +2083,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "recorder",
-    "line": 1531
+    "line": 1572
   },
   {
     "name": "get_available_audio_sources",
@@ -2062,7 +2091,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1555
+    "line": 1596
   },
   {
     "name": "create_video_decoder",
@@ -2070,7 +2099,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1569
+    "line": 1610
   },
   {
     "name": "video_decoder_start",
@@ -2084,7 +2113,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1576
+    "line": 1617
   },
   {
     "name": "video_decoder_get_frame_data",
@@ -2092,7 +2121,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1583
+    "line": 1624
   },
   {
     "name": "video_decoder_seek",
@@ -2106,7 +2135,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1590
+    "line": 1631
   },
   {
     "name": "video_decoder_stop",
@@ -2114,7 +2143,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1597
+    "line": 1638
   },
   {
     "name": "video_decoder_remove",
@@ -2122,7 +2151,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1604
+    "line": 1645
   },
   {
     "name": "start_video_decoder_listener",
@@ -2136,7 +2165,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1611
+    "line": 1652
   },
   {
     "name": "stop_video_decoder_listener",
@@ -2150,7 +2179,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1621
+    "line": 1662
   },
   {
     "name": "create_media_audio_player",
@@ -2164,7 +2193,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1643
+    "line": 1684
   },
   {
     "name": "set_media_audio_volume",
@@ -2178,7 +2207,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1650
+    "line": 1691
   },
   {
     "name": "media_audio_add_video_decoder_source",
@@ -2186,7 +2215,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1657
+    "line": 1698
   },
   {
     "name": "media_audio_remove_video_decoder_source",
@@ -2194,7 +2223,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1664
+    "line": 1705
   },
   {
     "name": "media_audio_start",
@@ -2202,7 +2231,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1671
+    "line": 1712
   },
   {
     "name": "media_audio_stop",
@@ -2210,7 +2239,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1678
+    "line": 1719
   },
   {
     "name": "media_audio_destroy",
@@ -2218,7 +2247,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "media-audio",
-    "line": 1685
+    "line": 1726
   },
   {
     "name": "get_game_recorder",
@@ -2226,7 +2255,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1702
+    "line": 1743
   },
   {
     "name": "game_recorder_start",
@@ -2240,7 +2269,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1709
+    "line": 1750
   },
   {
     "name": "game_recorder_stop",
@@ -2248,7 +2277,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1716
+    "line": 1757
   },
   {
     "name": "game_recorder_pause",
@@ -2256,7 +2285,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1723
+    "line": 1764
   },
   {
     "name": "game_recorder_resume",
@@ -2264,7 +2293,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1730
+    "line": 1771
   },
   {
     "name": "game_recorder_abort",
@@ -2272,7 +2301,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1737
+    "line": 1778
   },
   {
     "name": "start_game_recorder_listener",
@@ -2286,7 +2315,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1744
+    "line": 1785
   },
   {
     "name": "stop_game_recorder_listener",
@@ -2300,7 +2329,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1754
+    "line": 1795
   },
   {
     "name": "operate_game_recorder_video",
@@ -2314,7 +2343,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1761
+    "line": 1802
   },
   {
     "name": "create_game_recorder_share_button",
@@ -2333,7 +2362,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1768
+    "line": 1809
   },
   {
     "name": "show_game_recorder_share_button",
@@ -2341,7 +2370,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1779
+    "line": 1820
   },
   {
     "name": "hide_game_recorder_share_button",
@@ -2349,7 +2378,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1786
+    "line": 1827
   },
   {
     "name": "off_game_recorder_share_button_tap",
@@ -2357,7 +2386,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "game-recorder",
-    "line": 1793
+    "line": 1834
   },
   {
     "name": "set_inner_audio_option",
@@ -2371,7 +2400,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "inner-audio",
-    "line": 1817
+    "line": 1858
   },
   {
     "name": "create_inner_audio_context",
@@ -2390,7 +2419,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "inner-audio",
-    "line": 1824
+    "line": 1865
   },
   {
     "name": "set_inner_audio_properties",
@@ -2404,7 +2433,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "inner-audio",
-    "line": 1835
+    "line": 1876
   },
   {
     "name": "get_inner_audio_state",
@@ -2412,7 +2441,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "inner-audio",
-    "line": 1842
+    "line": 1883
   },
   {
     "name": "inner_audio_play",
@@ -2420,7 +2449,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "inner-audio",
-    "line": 1849
+    "line": 1890
   },
   {
     "name": "inner_audio_pause",
@@ -2428,7 +2457,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "inner-audio",
-    "line": 1856
+    "line": 1897
   },
   {
     "name": "inner_audio_stop",
@@ -2436,7 +2465,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "inner-audio",
-    "line": 1863
+    "line": 1904
   },
   {
     "name": "inner_audio_seek",
@@ -2450,7 +2479,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "inner-audio",
-    "line": 1870
+    "line": 1911
   },
   {
     "name": "stop_inner_audio_listener",
@@ -2464,7 +2493,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "inner-audio",
-    "line": 1877
+    "line": 1918
   },
   {
     "name": "inner_audio_destroy",
@@ -2472,7 +2501,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "inner-audio",
-    "line": 1884
+    "line": 1925
   },
   {
     "name": "get_network_type",
@@ -2480,7 +2509,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "network-status",
-    "line": 1908
+    "line": 1949
   },
   {
     "name": "start_network_status_listener",
@@ -2488,7 +2517,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "network-status",
-    "line": 1922
+    "line": 1963
   },
   {
     "name": "stop_network_status_listener",
@@ -2496,7 +2525,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "bool",
     "category": "network-status",
-    "line": 1942
+    "line": 1983
   },
   {
     "name": "start_accelerometer",
@@ -2510,7 +2539,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "sensors",
-    "line": 1951
+    "line": 1992
   },
   {
     "name": "stop_accelerometer",
@@ -2518,7 +2547,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "sensors",
-    "line": 1958
+    "line": 1999
   },
   {
     "name": "start_gyroscope",
@@ -2532,7 +2561,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "sensors",
-    "line": 1965
+    "line": 2006
   },
   {
     "name": "stop_gyroscope",
@@ -2540,7 +2569,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "sensors",
-    "line": 1972
+    "line": 2013
   },
   {
     "name": "start_compass",
@@ -2548,7 +2577,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "sensors",
-    "line": 1979
+    "line": 2020
   },
   {
     "name": "stop_compass",
@@ -2556,7 +2585,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "sensors",
-    "line": 1986
+    "line": 2027
   },
   {
     "name": "start_device_motion_listening",
@@ -2570,7 +2599,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "sensors",
-    "line": 1993
+    "line": 2034
   },
   {
     "name": "stop_device_motion_listening",
@@ -2578,7 +2607,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "sensors",
-    "line": 2000
+    "line": 2041
   },
   {
     "name": "get_battery_info",
@@ -2586,7 +2615,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "sensors",
-    "line": 2007
+    "line": 2048
   },
   {
     "name": "get_battery_info_sync",
@@ -2594,7 +2623,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "Dictionary",
     "category": "sensors",
-    "line": 2014
+    "line": 2055
   },
   {
     "name": "start_audio_interruption_listener",
@@ -2602,7 +2631,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "audio-events",
-    "line": 2097
+    "line": 2138
   },
   {
     "name": "stop_audio_interruption_listener",
@@ -2610,7 +2639,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "bool",
     "category": "audio-events",
-    "line": 2113
+    "line": 2154
   },
   {
     "name": "start_theme_change_listener",
@@ -2618,7 +2647,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "performance",
-    "line": 2138
+    "line": 2179
   },
   {
     "name": "stop_theme_change_listener",
@@ -2626,7 +2655,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "bool",
     "category": "performance",
-    "line": 2150
+    "line": 2191
   },
   {
     "name": "get_performance_entries",
@@ -2640,7 +2669,7 @@ export const apiMethods = [
     ],
     "returnType": "Array",
     "category": "performance",
-    "line": 2170
+    "line": 2211
   },
   {
     "name": "report_performance",
@@ -2664,7 +2693,7 @@ export const apiMethods = [
     ],
     "returnType": "bool",
     "category": "performance",
-    "line": 2174
+    "line": 2215
   },
   {
     "name": "navigate_to_mini_program",
@@ -2703,7 +2732,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "app-control",
-    "line": 2183
+    "line": 2224
   },
   {
     "name": "navigate_back_mini_program",
@@ -2717,7 +2746,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "app-control",
-    "line": 2197
+    "line": 2238
   },
   {
     "name": "exit_mini_program",
@@ -2725,7 +2754,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "app-control",
-    "line": 2204
+    "line": 2245
   },
   {
     "name": "restart_mini_program",
@@ -2739,7 +2768,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "app-control",
-    "line": 2211
+    "line": 2252
   },
   {
     "name": "set_user_cloud_storage",
@@ -2753,7 +2782,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "cloud-data",
-    "line": 2228
+    "line": 2269
   },
   {
     "name": "remove_user_cloud_storage",
@@ -2767,7 +2796,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "cloud-data",
-    "line": 2235
+    "line": 2276
   },
   {
     "name": "get_user_cloud_storage_keys",
@@ -2775,7 +2804,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "cloud-data",
-    "line": 2242
+    "line": 2283
   },
   {
     "name": "get_user_cloud_storage",
@@ -2789,7 +2818,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "cloud-data",
-    "line": 2249
+    "line": 2290
   },
   {
     "name": "get_friend_cloud_storage",
@@ -2803,7 +2832,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "cloud-data",
-    "line": 2256
+    "line": 2297
   },
   {
     "name": "get_group_cloud_storage",
@@ -2827,7 +2856,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "cloud-data",
-    "line": 2263
+    "line": 2304
   },
   {
     "name": "post_open_data_context_message",
@@ -2846,7 +2875,7 @@ export const apiMethods = [
     ],
     "returnType": "bool",
     "category": "cloud-data",
-    "line": 2270
+    "line": 2311
   },
   {
     "name": "open_customer_service_conversation",
@@ -2880,7 +2909,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "service",
-    "line": 2286
+    "line": 2327
   },
   {
     "name": "request_subscribe_message",
@@ -2894,7 +2923,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "service",
-    "line": 2299
+    "line": 2340
   },
   {
     "name": "request_subscribe_system_message",
@@ -2908,7 +2937,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "service",
-    "line": 2306
+    "line": 2347
   },
   {
     "name": "start_update_listener",
@@ -2916,7 +2945,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "runtime",
-    "line": 2331
+    "line": 2372
   },
   {
     "name": "apply_update",
@@ -2924,7 +2953,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "bool",
     "category": "runtime",
-    "line": 2341
+    "line": 2382
   },
   {
     "name": "start_memory_warning_listener",
@@ -2932,7 +2961,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "runtime",
-    "line": 2370
+    "line": 2411
   },
   {
     "name": "stop_memory_warning_listener",
@@ -2940,7 +2969,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "bool",
     "category": "runtime",
-    "line": 2382
+    "line": 2423
   },
   {
     "name": "start_window_resize_listener",
@@ -2948,7 +2977,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "runtime",
-    "line": 2404
+    "line": 2445
   },
   {
     "name": "stop_window_resize_listener",
@@ -2956,7 +2985,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "bool",
     "category": "runtime",
-    "line": 2416
+    "line": 2457
   },
   {
     "name": "start_unhandled_rejection_listener",
@@ -2964,7 +2993,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "runtime",
-    "line": 2437
+    "line": 2478
   },
   {
     "name": "stop_unhandled_rejection_listener",
@@ -2972,7 +3001,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "bool",
     "category": "runtime",
-    "line": 2449
+    "line": 2490
   },
   {
     "name": "get_screen_brightness",
@@ -2980,7 +3009,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "screen-capture",
-    "line": 2471
+    "line": 2512
   },
   {
     "name": "set_screen_brightness",
@@ -2994,7 +3023,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "screen-capture",
-    "line": 2485
+    "line": 2526
   },
   {
     "name": "start_user_capture_screen_listener",
@@ -3002,7 +3031,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "screen-capture",
-    "line": 2499
+    "line": 2540
   },
   {
     "name": "stop_user_capture_screen_listener",
@@ -3010,7 +3039,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "bool",
     "category": "screen-capture",
-    "line": 2511
+    "line": 2552
   },
   {
     "name": "get_screen_recording_state",
@@ -3018,7 +3047,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "screen-capture",
-    "line": 2530
+    "line": 2571
   },
   {
     "name": "start_screen_recording_state_listener",
@@ -3026,7 +3055,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "screen-capture",
-    "line": 2544
+    "line": 2585
   },
   {
     "name": "stop_screen_recording_state_listener",
@@ -3034,7 +3063,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "bool",
     "category": "screen-capture",
-    "line": 2556
+    "line": 2597
   },
   {
     "name": "set_visual_effect_on_capture",
@@ -3048,7 +3077,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "screen-capture",
-    "line": 2576
+    "line": 2617
   },
   {
     "name": "can_i_use",
@@ -3062,7 +3091,7 @@ export const apiMethods = [
     ],
     "returnType": "bool",
     "category": "system",
-    "line": 2592
+    "line": 2633
   },
   {
     "name": "get_device_info",
@@ -3070,7 +3099,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "Dictionary",
     "category": "system",
-    "line": 2598
+    "line": 2639
   },
   {
     "name": "get_app_base_info",
@@ -3078,7 +3107,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "Dictionary",
     "category": "system",
-    "line": 2602
+    "line": 2643
   },
   {
     "name": "get_system_setting",
@@ -3086,7 +3115,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "Dictionary",
     "category": "system",
-    "line": 2606
+    "line": 2647
   },
   {
     "name": "get_app_authorize_setting",
@@ -3094,7 +3123,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "Dictionary",
     "category": "system",
-    "line": 2610
+    "line": 2651
   },
   {
     "name": "get_system_info",
@@ -3102,7 +3131,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "Dictionary",
     "category": "system",
-    "line": 2614
+    "line": 2655
   },
   {
     "name": "get_launch_options",
@@ -3110,7 +3139,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "Dictionary",
     "category": "system",
-    "line": 2618
+    "line": 2659
   },
   {
     "name": "get_window_info",
@@ -3118,7 +3147,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "Dictionary",
     "category": "system",
-    "line": 2622
+    "line": 2663
   },
   {
     "name": "get_menu_button_rect",
@@ -3126,11 +3155,11 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "Dictionary",
     "category": "system",
-    "line": 2626
+    "line": 2667
   },
   {
     "name": "call_api",
-    "signature": "call_api(api_name: String, params: Dictionary = {}) -> void",
+    "signature": "call_api(api_name: String, params: Dictionary = {}, completion_mode: String = \"auto\") -> void",
     "parameters": [
       {
         "name": "api_name",
@@ -3141,11 +3170,16 @@ export const apiMethods = [
         "name": "params",
         "type": "Dictionary",
         "defaultValue": "{}"
+      },
+      {
+        "name": "completion_mode",
+        "type": "String",
+        "defaultValue": "\"auto\""
       }
     ],
     "returnType": "void",
     "category": "generic",
-    "line": 2644
+    "line": 2687
   },
   {
     "name": "set_clipboard",
@@ -3159,7 +3193,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "native-ui",
-    "line": 2681
+    "line": 2724
   },
   {
     "name": "get_clipboard",
@@ -3167,7 +3201,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "native-ui",
-    "line": 2686
+    "line": 2729
   },
   {
     "name": "set_keep_screen_on",
@@ -3181,7 +3215,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "native-ui",
-    "line": 2701
+    "line": 2744
   },
   {
     "name": "show_toast",
@@ -3205,7 +3239,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "native-ui",
-    "line": 2709
+    "line": 2752
   },
   {
     "name": "show_modal",
@@ -3224,7 +3258,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "native-ui",
-    "line": 2714
+    "line": 2757
   },
   {
     "name": "show_loading",
@@ -3238,7 +3272,7 @@ export const apiMethods = [
     ],
     "returnType": "void",
     "category": "native-ui",
-    "line": 2731
+    "line": 2774
   },
   {
     "name": "hide_loading",
@@ -3246,7 +3280,7 @@ export const apiMethods = [
     "parameters": [],
     "returnType": "void",
     "category": "native-ui",
-    "line": 2736
+    "line": 2779
   }
 ] as const;
 
@@ -3682,6 +3716,34 @@ export const apiSignals = [
     "line": 37
   },
   {
+    "name": "http_request_completed",
+    "signature": "http_request_completed(request_id: int, status_code: int, data: String, error: String)",
+    "parameters": [
+      {
+        "name": "request_id",
+        "type": "int",
+        "defaultValue": ""
+      },
+      {
+        "name": "status_code",
+        "type": "int",
+        "defaultValue": ""
+      },
+      {
+        "name": "data",
+        "type": "String",
+        "defaultValue": ""
+      },
+      {
+        "name": "error",
+        "type": "String",
+        "defaultValue": ""
+      }
+    ],
+    "category": "http",
+    "line": 38
+  },
+  {
     "name": "file_transfer_result",
     "signature": "file_transfer_result(action: String, success: bool, status_code: int, data_json: String, error: String)",
     "parameters": [
@@ -3712,7 +3774,7 @@ export const apiSignals = [
       }
     ],
     "category": "http",
-    "line": 38
+    "line": 39
   },
   {
     "name": "socket_operation_result",
@@ -3740,7 +3802,7 @@ export const apiSignals = [
       }
     ],
     "category": "websocket",
-    "line": 39
+    "line": 40
   },
   {
     "name": "socket_opened",
@@ -3758,7 +3820,7 @@ export const apiSignals = [
       }
     ],
     "category": "websocket",
-    "line": 40
+    "line": 41
   },
   {
     "name": "socket_message_received",
@@ -3781,7 +3843,7 @@ export const apiSignals = [
       }
     ],
     "category": "websocket",
-    "line": 41
+    "line": 42
   },
   {
     "name": "socket_closed",
@@ -3809,7 +3871,7 @@ export const apiSignals = [
       }
     ],
     "category": "websocket",
-    "line": 42
+    "line": 43
   },
   {
     "name": "socket_error",
@@ -3827,7 +3889,7 @@ export const apiSignals = [
       }
     ],
     "category": "websocket",
-    "line": 43
+    "line": 44
   },
   {
     "name": "file_system_result",
@@ -3855,7 +3917,7 @@ export const apiSignals = [
       }
     ],
     "category": "filesystem",
-    "line": 44
+    "line": 45
   },
   {
     "name": "subpackage_result",
@@ -3883,7 +3945,7 @@ export const apiSignals = [
       }
     ],
     "category": "subpackages",
-    "line": 45
+    "line": 46
   },
   {
     "name": "subpackage_progress",
@@ -3916,7 +3978,7 @@ export const apiSignals = [
       }
     ],
     "category": "subpackages",
-    "line": 46
+    "line": 47
   },
   {
     "name": "worker_operation_result",
@@ -3944,7 +4006,7 @@ export const apiSignals = [
       }
     ],
     "category": "worker",
-    "line": 47
+    "line": 48
   },
   {
     "name": "worker_message",
@@ -3962,7 +4024,7 @@ export const apiSignals = [
       }
     ],
     "category": "worker",
-    "line": 48
+    "line": 49
   },
   {
     "name": "worker_error",
@@ -3980,7 +4042,7 @@ export const apiSignals = [
       }
     ],
     "category": "worker",
-    "line": 49
+    "line": 50
   },
   {
     "name": "worker_process_killed",
@@ -3998,7 +4060,7 @@ export const apiSignals = [
       }
     ],
     "category": "worker",
-    "line": 50
+    "line": 51
   },
   {
     "name": "media_result",
@@ -4026,7 +4088,7 @@ export const apiSignals = [
       }
     ],
     "category": "media",
-    "line": 51
+    "line": 52
   },
   {
     "name": "camera_operation_result",
@@ -4054,7 +4116,7 @@ export const apiSignals = [
       }
     ],
     "category": "camera",
-    "line": 52
+    "line": 53
   },
   {
     "name": "camera_frame",
@@ -4072,7 +4134,7 @@ export const apiSignals = [
       }
     ],
     "category": "camera",
-    "line": 53
+    "line": 54
   },
   {
     "name": "camera_event",
@@ -4095,7 +4157,7 @@ export const apiSignals = [
       }
     ],
     "category": "camera",
-    "line": 54
+    "line": 55
   },
   {
     "name": "video_operation_result",
@@ -4123,7 +4185,7 @@ export const apiSignals = [
       }
     ],
     "category": "video",
-    "line": 55
+    "line": 56
   },
   {
     "name": "video_event",
@@ -4146,7 +4208,7 @@ export const apiSignals = [
       }
     ],
     "category": "video",
-    "line": 56
+    "line": 57
   },
   {
     "name": "recorder_operation_result",
@@ -4174,7 +4236,7 @@ export const apiSignals = [
       }
     ],
     "category": "recorder",
-    "line": 57
+    "line": 58
   },
   {
     "name": "recorder_event",
@@ -4197,7 +4259,7 @@ export const apiSignals = [
       }
     ],
     "category": "recorder",
-    "line": 58
+    "line": 59
   },
   {
     "name": "available_audio_sources_received",
@@ -4220,7 +4282,7 @@ export const apiSignals = [
       }
     ],
     "category": "recorder",
-    "line": 59
+    "line": 60
   },
   {
     "name": "video_decoder_operation_result",
@@ -4248,7 +4310,7 @@ export const apiSignals = [
       }
     ],
     "category": "media-audio",
-    "line": 60
+    "line": 61
   },
   {
     "name": "video_decoder_event",
@@ -4271,7 +4333,7 @@ export const apiSignals = [
       }
     ],
     "category": "media-audio",
-    "line": 61
+    "line": 62
   },
   {
     "name": "media_audio_operation_result",
@@ -4299,7 +4361,7 @@ export const apiSignals = [
       }
     ],
     "category": "media-audio",
-    "line": 62
+    "line": 63
   },
   {
     "name": "game_recorder_operation_result",
@@ -4327,7 +4389,7 @@ export const apiSignals = [
       }
     ],
     "category": "game-recorder",
-    "line": 63
+    "line": 64
   },
   {
     "name": "game_recorder_event",
@@ -4350,7 +4412,7 @@ export const apiSignals = [
       }
     ],
     "category": "game-recorder",
-    "line": 64
+    "line": 65
   },
   {
     "name": "inner_audio_operation_result",
@@ -4378,7 +4440,7 @@ export const apiSignals = [
       }
     ],
     "category": "inner-audio",
-    "line": 65
+    "line": 66
   },
   {
     "name": "inner_audio_event",
@@ -4401,7 +4463,7 @@ export const apiSignals = [
       }
     ],
     "category": "inner-audio",
-    "line": 66
+    "line": 67
   },
   {
     "name": "network_type_received",
@@ -4424,7 +4486,7 @@ export const apiSignals = [
       }
     ],
     "category": "network-status",
-    "line": 67
+    "line": 68
   },
   {
     "name": "network_status_changed",
@@ -4447,7 +4509,7 @@ export const apiSignals = [
       }
     ],
     "category": "network-status",
-    "line": 68
+    "line": 69
   },
   {
     "name": "sensor_started",
@@ -4470,7 +4532,7 @@ export const apiSignals = [
       }
     ],
     "category": "sensors",
-    "line": 70
+    "line": 71
   },
   {
     "name": "sensor_stopped",
@@ -4493,7 +4555,7 @@ export const apiSignals = [
       }
     ],
     "category": "sensors",
-    "line": 71
+    "line": 72
   },
   {
     "name": "accelerometer_changed",
@@ -4521,7 +4583,7 @@ export const apiSignals = [
       }
     ],
     "category": "sensors",
-    "line": 72
+    "line": 73
   },
   {
     "name": "gyroscope_changed",
@@ -4549,7 +4611,7 @@ export const apiSignals = [
       }
     ],
     "category": "sensors",
-    "line": 73
+    "line": 74
   },
   {
     "name": "compass_changed",
@@ -4572,7 +4634,7 @@ export const apiSignals = [
       }
     ],
     "category": "sensors",
-    "line": 74
+    "line": 75
   },
   {
     "name": "device_motion_changed",
@@ -4600,7 +4662,7 @@ export const apiSignals = [
       }
     ],
     "category": "sensors",
-    "line": 75
+    "line": 76
   },
   {
     "name": "battery_info_received",
@@ -4628,7 +4690,7 @@ export const apiSignals = [
       }
     ],
     "category": "sensors",
-    "line": 76
+    "line": 77
   },
   {
     "name": "audio_interruption",
@@ -4651,7 +4713,7 @@ export const apiSignals = [
       }
     ],
     "category": "audio-events",
-    "line": 78
+    "line": 79
   },
   {
     "name": "theme_changed",
@@ -4674,7 +4736,7 @@ export const apiSignals = [
       }
     ],
     "category": "performance",
-    "line": 79
+    "line": 80
   },
   {
     "name": "mini_program_navigation_result",
@@ -4702,7 +4764,7 @@ export const apiSignals = [
       }
     ],
     "category": "app-control",
-    "line": 80
+    "line": 81
   },
   {
     "name": "cloud_storage_result",
@@ -4730,7 +4792,7 @@ export const apiSignals = [
       }
     ],
     "category": "cloud-data",
-    "line": 81
+    "line": 82
   },
   {
     "name": "customer_service_result",
@@ -4758,7 +4820,7 @@ export const apiSignals = [
       }
     ],
     "category": "service",
-    "line": 82
+    "line": 83
   },
   {
     "name": "subscribe_message_result",
@@ -4786,7 +4848,7 @@ export const apiSignals = [
       }
     ],
     "category": "service",
-    "line": 83
+    "line": 84
   },
   {
     "name": "update_checked",
@@ -4809,7 +4871,7 @@ export const apiSignals = [
       }
     ],
     "category": "runtime",
-    "line": 84
+    "line": 85
   },
   {
     "name": "update_ready",
@@ -4822,7 +4884,7 @@ export const apiSignals = [
       }
     ],
     "category": "runtime",
-    "line": 85
+    "line": 86
   },
   {
     "name": "update_failed",
@@ -4835,7 +4897,7 @@ export const apiSignals = [
       }
     ],
     "category": "runtime",
-    "line": 86
+    "line": 87
   },
   {
     "name": "memory_warning",
@@ -4858,7 +4920,7 @@ export const apiSignals = [
       }
     ],
     "category": "runtime",
-    "line": 87
+    "line": 88
   },
   {
     "name": "window_resized",
@@ -4886,7 +4948,7 @@ export const apiSignals = [
       }
     ],
     "category": "runtime",
-    "line": 88
+    "line": 89
   },
   {
     "name": "unhandled_rejection",
@@ -4909,7 +4971,7 @@ export const apiSignals = [
       }
     ],
     "category": "runtime",
-    "line": 89
+    "line": 90
   },
   {
     "name": "screen_brightness_received",
@@ -4932,7 +4994,7 @@ export const apiSignals = [
       }
     ],
     "category": "screen-capture",
-    "line": 90
+    "line": 91
   },
   {
     "name": "screen_brightness_set",
@@ -4955,7 +5017,7 @@ export const apiSignals = [
       }
     ],
     "category": "screen-capture",
-    "line": 91
+    "line": 92
   },
   {
     "name": "user_capture_screen",
@@ -4973,7 +5035,7 @@ export const apiSignals = [
       }
     ],
     "category": "screen-capture",
-    "line": 92
+    "line": 93
   },
   {
     "name": "screen_recording_state_received",
@@ -4996,7 +5058,7 @@ export const apiSignals = [
       }
     ],
     "category": "screen-capture",
-    "line": 93
+    "line": 94
   },
   {
     "name": "screen_recording_state_changed",
@@ -5019,7 +5081,7 @@ export const apiSignals = [
       }
     ],
     "category": "screen-capture",
-    "line": 94
+    "line": 95
   },
   {
     "name": "visual_effect_on_capture_set",
@@ -5042,7 +5104,7 @@ export const apiSignals = [
       }
     ],
     "category": "screen-capture",
-    "line": 95
+    "line": 96
   },
   {
     "name": "clipboard_received",
@@ -5060,7 +5122,7 @@ export const apiSignals = [
       }
     ],
     "category": "native-ui",
-    "line": 97
+    "line": 98
   },
   {
     "name": "modal_result",
@@ -5073,7 +5135,7 @@ export const apiSignals = [
       }
     ],
     "category": "native-ui",
-    "line": 99
+    "line": 100
   },
   {
     "name": "generic_api_result",
@@ -5101,7 +5163,7 @@ export const apiSignals = [
       }
     ],
     "category": "generic",
-    "line": 101
+    "line": 102
   },
   {
     "name": "app_shown",
@@ -5114,14 +5176,14 @@ export const apiSignals = [
       }
     ],
     "category": "lifecycle",
-    "line": 103
+    "line": 104
   },
   {
     "name": "app_hidden",
     "signature": "app_hidden()",
     "parameters": [],
     "category": "lifecycle",
-    "line": 104
+    "line": 105
   },
   {
     "name": "app_error",
@@ -5134,7 +5196,7 @@ export const apiSignals = [
       }
     ],
     "category": "lifecycle",
-    "line": 105
+    "line": 106
   },
   {
     "name": "bridge_initialization_failed",
@@ -5147,6 +5209,6 @@ export const apiSignals = [
       }
     ],
     "category": "bridge",
-    "line": 106
+    "line": 107
   }
 ] as const;

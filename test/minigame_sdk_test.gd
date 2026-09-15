@@ -2,6 +2,19 @@ extends SceneTree
 
 const MiniGameSDKScript = preload("res://addons/godot_mini_game/MiniGameSDK.gd")
 
+class CallbackTestSDK:
+	extends "res://addons/godot_mini_game/MiniGameSDK.gd"
+
+	var created_handlers: Array[Callable] = []
+	var events: Array = []
+
+	func _create_bridge_callback(handler: Callable) -> JavaScriptObject:
+		created_handlers.append(handler)
+		return null
+
+	func record_event(args: Array, label: String = "") -> void:
+		events.append([args, label])
+
 var _failed := false
 
 
@@ -12,6 +25,32 @@ func _assert_eq(actual: Variant, expected: Variant, message: String) -> void:
 
 
 func _init() -> void:
+	var callback_sdk := CallbackTestSDK.new()
+	for i in range(100):
+		callback_sdk._track_persistent(callback_sdk.record_event)
+		callback_sdk._track_persistent(callback_sdk.record_event.bind("first"))
+		callback_sdk._track_persistent(callback_sdk.record_event.bind("second"))
+	_assert_eq(callback_sdk.created_handlers.size(), 3, "Repeated sessions reuse persistent bridge callbacks")
+	_assert_eq(callback_sdk._cbs.size(), 3, "Persistent callback retention stays bounded per Callable")
+	callback_sdk.created_handlers[1].call(["event"])
+	callback_sdk.created_handlers[2].call(["event"])
+	_assert_eq(callback_sdk.events, [[["event"], "first"], [["event"], "second"]], "Different bound handlers remain independent")
+	callback_sdk._track_oneshot(callback_sdk.record_event.bind("request-a"))
+	callback_sdk._track_oneshot(callback_sdk.record_event.bind("request-b"))
+	callback_sdk.created_handlers[4].call(["b"])
+	callback_sdk.created_handlers[3].call(["a"])
+	callback_sdk.created_handlers[3].call(["duplicate"])
+	_assert_eq(callback_sdk.events.slice(2), [[["b"], "request-b"], [["a"], "request-a"]], "One-shot callbacks keep request identity and ignore duplicates")
+	_assert_eq(callback_sdk._cbs.size(), 3, "Completed one-shot callbacks release their references")
+	var other_callback_sdk := CallbackTestSDK.new()
+	for i in range(100):
+		callback_sdk._track_persistent(other_callback_sdk.record_event)
+	_assert_eq(callback_sdk.created_handlers.size(), 6, "Handlers from different instances retain separate callbacks")
+	callback_sdk.created_handlers[5].call(["other-instance"])
+	_assert_eq(other_callback_sdk.events, [[["other-instance"], ""]], "An instance callback dispatches to its owning instance")
+	_assert_eq(callback_sdk._cbs.size(), 4, "Each distinct persistent subscription adds only one reference")
+	callback_sdk.free()
+	other_callback_sdk.free()
 	var sdk := MiniGameSDKScript.new()
 	_assert_eq(MiniGameSDKScript.BRIDGE_ABI_VERSION, 1, "Bridge ABI contract")
 	_assert_eq(
@@ -811,6 +850,26 @@ func _init() -> void:
 	sdk._on_visual_effect_on_capture_set(["hidden", true, ""])
 	_assert_eq(holder["visual_effect"], ["hidden", true, ""], "visual effect callback conversion")
 
+	var identified_http_results: Array = []
+	sdk.http_request_completed.connect(func(request_id: int, status: int, data: String, error: String) -> void:
+		identified_http_results.append([request_id, status, data, error]))
+	var first_request_id := sdk.http_request_with_id("https://example.com/profile")
+	var second_request_id := sdk.http_request_with_id("https://example.com/inventory")
+	_assert_eq(second_request_id > first_request_id, true, "HTTP request IDs are unique and increasing")
+	_assert_eq(identified_http_results, [], "HTTP completion waits until the caller receives its request ID")
+	await process_frame
+	_assert_eq(identified_http_results, [
+		[first_request_id, 0, "", MiniGameSDKScript.NOT_IN_RUNTIME],
+		[second_request_id, 0, "", MiniGameSDKScript.NOT_IN_RUNTIME],
+	], "Identified HTTP requests report fallback errors with the matching IDs")
+	identified_http_results.clear()
+	sdk._on_http_response_with_id([200, "inventory", ""], second_request_id)
+	sdk._on_http_response_with_id([0, "", "timeout"], first_request_id)
+	await process_frame
+	_assert_eq(identified_http_results, [
+		[second_request_id, 200, "inventory", ""],
+		[first_request_id, 0, "", "timeout"],
+	], "Out-of-order HTTP completions preserve their request IDs")
 	sdk.free()
 	if _failed:
 		quit(1)

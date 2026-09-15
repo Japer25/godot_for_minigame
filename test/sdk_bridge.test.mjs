@@ -117,6 +117,89 @@ async function testCallApiUsesSuccessCallback() {
   ]);
 }
 
+async function testCallApiCompletionModes() {
+  const pending = {};
+  const { GodotSDK } = await loadSdkWithApi({
+    request(options) { pending.request = options; return {}; },
+    downloadFile(options) { pending.download = options; return { abort() {} }; },
+    customTask(options) { pending.custom = options; return { abort() {} }; },
+    opaqueAsync(options) { pending.opaque = options; return { handle: 7 }; },
+    getWindowInfo() { return { windowWidth: 640 }; },
+    getValue(key) { return key === "zero" ? 0 : null; },
+    setValueSync() {},
+    voidMethod() {},
+    promiseOnly() { return Promise.resolve(false); },
+    callbackAndPromise(options) { options.success({ winner: "callback" }); return Promise.resolve({ winner: "promise" }); },
+  });
+  const sdk = new GodotSDK();
+  const results = [];
+  const done = (...args) => results.push(args);
+  sdk.callApi("request", "{}", done);
+  sdk.callApi("downloadFile", "{}", done);
+  sdk.callApi("customTask", "{}", done);
+  sdk.callApi("opaqueAsync", "{}", done, "async");
+  assert.deepEqual(results, [], "returning a task must not complete the operation");
+  pending.download.success({ tempFilePath: "tmp/a" });
+  pending.request.fail({ errMsg: "request:fail timeout" });
+  pending.request.success({ data: "late duplicate" });
+  pending.custom.success({ ready: true });
+  pending.opaque.fail({ errMsg: "opaqueAsync:fail" });
+  assert.deepEqual(results, [
+    ["downloadFile", true, '{"tempFilePath":"tmp/a"}', ""],
+    ["request", false, "", "request:fail timeout"],
+    ["customTask", true, '{"ready":true}', ""],
+    ["opaqueAsync", false, "", "opaqueAsync:fail"],
+  ]);
+  results.length = 0;
+  sdk.callApi("getWindowInfo", "{}", done);
+  sdk.callApi("getValue", '{"_args":["zero"]}', done);
+  sdk.callApi("getValue", '{"_args":["missing"]}', done);
+  sdk.callApi("setValueSync", '{"_args":[]}', done);
+  sdk.callApi("voidMethod", '{"_args":[]}', done, "sync");
+  sdk.callApi("promiseOnly", "{}", done);
+  sdk.callApi("callbackAndPromise", "{}", done);
+  await Promise.resolve();
+  assert.deepEqual(results, [
+    ["getWindowInfo", true, '{"windowWidth":640}', ""],
+    ["getValue", true, "0", ""],
+    ["getValue", true, "null", ""],
+    ["setValueSync", true, "", ""],
+    ["voidMethod", true, "", ""],
+    ["callbackAndPromise", true, '{"winner":"callback"}', ""],
+    ["promiseOnly", true, "false", ""],
+  ]);
+  sdk.callApi("getWindowInfo", "{}", done, "invalid");
+  assert.deepEqual(results.at(-1), ["getWindowInfo", false, "", "Invalid API completion mode: expected auto, async, or sync"]);
+}
+
+async function testHttpRequestsCompleteIndependently() {
+  const pending = {};
+  const { GodotSDK } = await loadSdkWithApi({
+    request(options) {
+      if (options.url === "/throw") throw new Error("host request failed");
+      pending[options.url] = options;
+      return { abort() {} };
+    },
+  });
+  const sdk = new GodotSDK();
+  const results = [];
+  sdk.httpRequest("/profile", "GET", "", "{}", (...args) => results.push(["profile", ...args]));
+  sdk.httpRequest("/inventory", "GET", "", "{}", (...args) => results.push(["inventory", ...args]));
+  assert.deepEqual(results, []);
+  pending["/inventory"].success({ statusCode: 200, data: { items: [] } });
+  pending["/profile"].fail({ errMsg: "request:fail timeout" });
+  pending["/profile"].success({ statusCode: 200, data: "duplicate" });
+  sdk.httpRequest("/throw", "GET", "", "{}", (...args) => results.push(["throw", ...args]));
+  assert.deepEqual(results, [
+    ["inventory", 200, '{"items":[]}', ""],
+    ["profile", 0, "", "request:fail timeout"],
+    ["throw", 0, "", "host request failed"],
+  ]);
+  const { GodotSDK: UnsupportedSDK } = await loadSdkWithApi({});
+  new UnsupportedSDK().httpRequest("/missing", "GET", "", "{}", (...args) => results.push(args));
+  assert.deepEqual(results.at(-1), [0, "", "wx.request is not supported"]);
+}
+
 async function testCallApiReportsUnsupportedMethods() {
   const { GodotSDK } = await loadSdkWithApi({});
   const sdk = new GodotSDK();
@@ -1314,9 +1397,9 @@ async function testSocketTaskWrappers() {
   assert.equal(typeof listeners.error, "function");
   assert.equal(typeof listeners.close, "function");
 
+  listeners.open({ header: { "Sec-WebSocket-Protocol": "chat" } });
   sdk.sendSocketMessage("hello", (...args) => operations.push(args));
   sdk.closeSocket(1000, "normal", (...args) => operations.push(args));
-  listeners.open({ header: { "Sec-WebSocket-Protocol": "chat" } });
   listeners.message({ data: "hello from server" });
   listeners.error({ errMsg: "socket broken" });
   listeners.close({ code: 1000, reason: "normal" });
@@ -1336,6 +1419,130 @@ async function testSocketTaskWrappers() {
     ["error", "", JSON.stringify({ errMsg: "socket broken" }), "socket broken"],
     ["close", "", JSON.stringify({ code: 1000, reason: "normal" }), ""],
   ]);
+}
+
+async function testSocketReplacementIsTransactional() {
+  const tasks = [];
+  let behavior = "normal";
+  const { GodotSDK } = await loadSdkWithApi({
+    connectSocket(options) {
+      if (behavior === "throw") throw new Error("connect failed");
+      if (behavior === "null") return null;
+      const task = { options, listeners: {}, captured: {}, sent: [], closeCalls: 0, offCalls: [] };
+      for (const event of ["Open", "Message", "Error", "Close"]) {
+        task[`on${event}`] = (listener) => {
+          if (behavior === "registration-error" && event === "Message") throw new Error("listener failed");
+          task.listeners[event] = listener;
+          task.captured[event] = listener;
+        };
+        task[`off${event}`] = (listener) => {
+          assert.equal(task.listeners[event], listener);
+          task.offCalls.push(event);
+          delete task.listeners[event];
+        };
+      }
+      task.send = (opts) => { task.sent.push(opts.data); opts.success({}); };
+      task.close = (opts) => {
+        task.closeCalls++;
+        if (task.listeners.Close) task.listeners.Close({ code: 1000 });
+        opts.success({});
+      };
+      tasks.push(task);
+      if (behavior !== "pending") options.success({ errMsg: "connectSocket:ok" });
+      return task;
+    },
+  });
+  const sdk = new GodotSDK();
+  const operations = [];
+  const events = [];
+  const connect = () => sdk.connectSocket("wss://example.com", "{}", "[]", false, false, 0, false,
+    (...args) => operations.push(args), (...args) => events.push(args));
+  const send = (data) => sdk.sendSocketMessage(data, (...args) => operations.push(args));
+  assert.equal(connect(), true);
+  const first = tasks[0];
+  first.captured.Open({});
+  assert.equal(connect(), true);
+  const second = tasks[1];
+  send("while-opening");
+  assert.deepEqual(first.sent, ["while-opening"], "old connection stays usable while replacement opens");
+  second.captured.Open({});
+  assert.equal(first.closeCalls, 1);
+  assert.deepEqual(first.offCalls, ["Open", "Message", "Error", "Close"]);
+  const eventCount = events.length;
+  first.captured.Open({});
+  first.captured.Message({ data: "stale" });
+  first.captured.Error({ errMsg: "stale error" });
+  first.captured.Close({ code: 1000 });
+  assert.equal(events.length, eventCount, "all events from retired connections are ignored");
+  send("new-connection");
+  assert.deepEqual(second.sent, ["new-connection"]);
+
+  for (const failure of ["throw", "null", "registration-error"]) {
+    behavior = failure;
+    assert.equal(connect(), false, failure);
+    assert.equal(operations.at(-1)[1], false, failure);
+    assert.equal(sdk._socketTask, second, `${failure} must preserve the working connection`);
+  }
+  behavior = "pending";
+  assert.equal(connect(), true);
+  const failed = tasks.at(-1);
+  failed.options.fail({ errMsg: "connection refused" });
+  assert.equal(sdk._socketTask, second);
+  assert.equal(failed.closeCalls, 1);
+  failed.captured.Open({});
+  assert.equal(sdk._socketTask, second, "late events from a failed candidate cannot reactivate it");
+
+  assert.equal(connect(), true);
+  const superseded = tasks.at(-1);
+  const beforeSupersede = operations.length;
+  assert.equal(connect(), true);
+  const replacement = tasks.at(-1);
+  assert.deepEqual(operations.slice(beforeSupersede), [
+    ["connectSocket", false, "", "WebSocket connection attempt superseded"],
+  ]);
+  assert.equal(superseded.closeCalls, 1);
+  superseded.captured.Open({});
+  superseded.captured.Close({});
+  assert.equal(sdk._socketTask, second);
+  replacement.options.success({});
+  replacement.captured.Open({});
+  assert.equal(sdk._socketTask, replacement);
+  assert.equal(second.closeCalls, 1);
+  replacement.captured.Close({ code: 1000 });
+  assert.equal(sdk._socketTask, null);
+
+  behavior = "normal";
+  connect();
+  const activeBeforeCancel = tasks.at(-1);
+  activeBeforeCancel.captured.Open({});
+  behavior = "pending";
+  connect();
+  const cancelWithActive = tasks.at(-1);
+  sdk.closeSocket(1000, "leave", (...args) => operations.push(args));
+  assert.equal(activeBeforeCancel.closeCalls, 1);
+  assert.equal(cancelWithActive.closeCalls, 1);
+  assert.equal(sdk._socketTask, null);
+  const eventsAfterCancel = events.length;
+  cancelWithActive.options.success({});
+  cancelWithActive.captured.Open({});
+  cancelWithActive.captured.Message({ data: "late" });
+  assert.equal(sdk._socketTask, null, "explicit close must not allow a pending replacement to reopen");
+  assert.equal(events.length, eventsAfterCancel);
+
+  behavior = "normal";
+  connect();
+  const disappearingActive = tasks.at(-1);
+  disappearingActive.captured.Open({});
+  behavior = "pending";
+  connect();
+  const cancelWithoutActive = tasks.at(-1);
+  disappearingActive.captured.Close({ code: 1006 });
+  assert.equal(sdk._socketTask, null);
+  sdk.closeSocket(1000, "leave", (...args) => operations.push(args));
+  assert.deepEqual(operations.at(-1), ["closeSocket", true, "{}", ""]);
+  assert.equal(cancelWithoutActive.closeCalls, 1);
+  cancelWithoutActive.captured.Open({});
+  assert.equal(sdk._socketTask, null, "close also cancels a candidate when the old socket is already gone");
 }
 
 async function testFileSystemManagerWrapper() {
@@ -3927,6 +4134,8 @@ async function testScreenWrappersReportUnsupportedMethods() {
 
 await testBridgeInfoUsesTheSelectedDouyinProvider();
 await testCallApiUsesSuccessCallback();
+await testCallApiCompletionModes();
+await testHttpRequestsCompleteIndependently();
 await testCallApiReportsUnsupportedMethods();
 await testTikTokStorageInfoNeverCallsTheHost();
 await testStorageInfoStillWorksOnWeChatAndDouyin();
@@ -3950,6 +4159,7 @@ await testRuntimeCapabilityWrappers();
 await testNetworkWrappers();
 await testFileTransferWrappers();
 await testSocketTaskWrappers();
+await testSocketReplacementIsTransactional();
 await testFileSystemManagerWrapper();
 await testSubpackageWrappers();
 await testWorkerWrappers();

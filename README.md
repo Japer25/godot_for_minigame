@@ -38,7 +38,7 @@ Emscripten, or a separate Godot Web template download.
 | | |
 |---|---|
 | **Editor-native workflow**<br />Build the PCK, assemble platform files, validate, and publish from one Dock. | **Exact template identity**<br />Godot source, Emscripten, profile, revision, schemas, features, and hashes stay aligned. |
-| **One capability-gated SDK**<br />`MiniGameSDK` exposes 224 methods and 83 signals over `wx`, `tt`, and `TTMinis.game`; availability still depends on the selected host. | **Guarded publishing**<br />Staging, ownership manifests, hashes, an output lock, backup, and rollback protect managed paths while preserving sidecars. |
+| **One capability-gated SDK**<br />`MiniGameSDK` exposes 225 methods and 84 signals over `wx`, `tt`, and `TTMinis.game`; availability still depends on the selected host. | **Guarded publishing**<br />Staging, ownership manifests, hashes, an output lock, backup, and rollback protect managed paths while preserving sidecars. |
 
 ## Architecture
 
@@ -164,7 +164,7 @@ At startup the SDK verifies the bridge brand, global name, ABI, and required
 methods before lifecycle binding. Inspect `bridge_info` and
 `bridge_initialization_error` when diagnosing integration issues.
 
-**[Browse all 224 methods and 83 signals →](https://anrans.github.io/godot_for_minigame/api/)**
+**[Browse all 225 methods and 84 signals →](https://anrans.github.io/godot_for_minigame/api/)**
 
 The reference is the complete bridge surface, not a claim that every method is
 available on every host. Shared names use capability gating; payment and other
@@ -189,6 +189,10 @@ Issues and pull requests are welcome. Keep platform-specific behavior behind
 the shared runtime and bridge contracts, and run the export test suite before
 submitting a change. Maintainers should follow the immutable
 [release process](docs/RELEASING.md).
+
+Run `./scripts/test.sh` with Node.js 22+ and the matching Godot editor installed.
+Use `GODOT_BIN=/path/to/Godot` if needed. GDScript tests use a temporary project
+and the committed Web preset, so local export settings are preserved.
 
 ## License
 

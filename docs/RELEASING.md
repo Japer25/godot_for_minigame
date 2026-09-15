@@ -39,15 +39,17 @@ does **not** mean the package has passed platform DevTools or a real device.
 Run the project contracts and website checks:
 
 ```bash
-node --test test/*.test.mjs
-
-for test_file in test/*_test.gd; do
-  godot --headless --path . --script "res://${test_file}"
-done
+./scripts/test.sh
 
 NEXT_PUBLIC_BASE_PATH=/godot_for_minigame npm --prefix website test
 ./scripts/package_plugin.sh
 ```
+
+The test runner requires Node.js 22+ and the exact Godot editor listed in
+`support-matrix.json`. Set `NODE_BIN` or `GODOT_BIN` when they are not on PATH.
+It runs GDScript tests in a temporary project with the committed Web preset,
+without replacing a developer's `export_presets.cfg`. JavaScript-only checks
+can also run directly with `node --test test/*.test.mjs` on a fresh checkout.
 
 TikTok Native is a beta target with an additional release gate. Export a fresh
 TikTok package from the release candidate, then:
