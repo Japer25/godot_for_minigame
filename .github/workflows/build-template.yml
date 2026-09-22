@@ -140,7 +140,7 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          js_candidates=(godot-src/bin/godot.web.template_release.wasm32*.js)
+          js_candidates=(godot-src/bin/godot.web.template_release.wasm32*.wrapped.js)
           wasm_candidates=(godot-src/bin/godot.web.template_release.wasm32*.wasm)
           shopt -u nullglob
           if [ "${#js_candidates[@]}" -ne 1 ] || [ "${#wasm_candidates[@]}" -ne 1 ]; then
@@ -153,7 +153,7 @@ jobs:
           wasm_file="${wasm_candidates[0]}"
           test -s "$js_file"
           test -s "$wasm_file"
-          if [ "${js_file%.js}" != "${wasm_file%.wasm}" ]; then
+          if [ "${js_file%.wrapped.js}.wasm" != "$wasm_file" ]; then
             echo "JavaScript and WASM artifact stems do not match" >&2
             exit 1
           fi
