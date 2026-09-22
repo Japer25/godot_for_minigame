@@ -127,6 +127,8 @@ jobs:
             arch=wasm32 \
            optimize=size_extra \
            disable_3d=yes \
+           disable_navigation_3d=yes \
+           disable_xr=yes \
             wasm_simd=no \
             threads=no \
             dlink_enabled=no \
