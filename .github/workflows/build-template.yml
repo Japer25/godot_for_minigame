@@ -125,7 +125,8 @@ jobs:
         run: |
           scons platform=web target=template_release \
             arch=wasm32 \
-            optimize=size \
+           optimize=size_extra \
+           disable_3d=yes \
             wasm_simd=no \
             threads=no \
             dlink_enabled=no \
